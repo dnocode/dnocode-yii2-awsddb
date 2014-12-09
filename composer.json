@@ -5,7 +5,7 @@
     "type": "yii2-extension",
     "license": "BSD-3-Clause",
     "support": {
-        "source": "https://github.com/yiisoft/yii2/issues?labels=ext%3Aredis"
+        "source": "https://github.com/dnocode/dnocode-yii2-awsddb"
     },
     "authors": [
         {
