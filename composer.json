@@ -1,0 +1,27 @@
+{
+    "name": "dnocode/yii2-awsddb",
+    "description": "Amazon dynamo db  ActiveRecord for the Yii framework",
+    "keywords": ["yii2", "dynamo db", "active-record", "amazon"],
+    "type": "yii2-extension",
+    "license": "BSD-3-Clause",
+    "support": {
+        "source": "https://github.com/yiisoft/yii2/issues?labels=ext%3Aredis"
+    },
+    "authors": [
+        {
+            "name": "Dino Ricceri",
+            "email": "ricceri.dino@gmail.com"
+        }
+    ],
+    "require": {
+        "yiisoft/yii2": "*",
+        "aws/aws-sdk-php": "2.*"
+
+    },
+    "autoload": {
+        "psr-4": { "yii\\awsddb\\": "" }
+    },
+    "extra": {
+
+    }
+}
