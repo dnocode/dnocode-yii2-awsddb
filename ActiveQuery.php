@@ -1,20 +1,16 @@
 <?php
+
 namespace dnocode\awsddb;
 
-use yii\base\Component;
-use yii\base\InvalidParamException;
-use yii\base\NotSupportedException;
 use yii\db\ActiveQueryInterface;
-use yii\db\ActiveQueryTrait;
-use yii\db\ActiveRelationTrait;
-use yii\db\QueryTrait;
+use yii\db\ActiveRecordInterface;
 
 /**
- * ActiveQuery represents a query associated with an Active Record class.
+ * ActiveQuery represents a DB query associated with an Active Record class.
  *
  * An ActiveQuery can be a normal query or be used in a relational context.
  *
- * ActiveQuery instances are usually created by [[ActiveRecord::find()]].
+ * ActiveQuery instances are usually created by [[ActiveRecord::find()]] and [[ActiveRecord::findBySql()]].
  * Relational queries are created by [[ActiveRecord::hasOne()]] and [[ActiveRecord::hasMany()]].
  *
  * Normal Query
@@ -30,9 +26,11 @@ use yii\db\QueryTrait;
  * - [[min()]]: returns the min over the specified column.
  * - [[max()]]: returns the max over the specified column.
  * - [[scalar()]]: returns the value of the first column in the first row of the query result.
+ * - [[column()]]: returns the value of the first column in the query result.
  * - [[exists()]]: returns a value indicating whether the query result has data or not.
  *
- * You can use query methods, such as [[where()]], [[limit()]] and [[orderBy()]] to customize the query options.
+ * Because ActiveQuery extends from [[Query]], one can use query methods, such as [[where()]],
+ * [[orderBy()]] to customize the query options.
  *
  * ActiveQuery also provides the following additional query options:
  *
@@ -58,32 +56,34 @@ use yii\db\QueryTrait;
  * A relation is specified by [[link]] which represents the association between columns
  * of different tables; and the multiplicity of the relation is indicated by [[multiple]].
  *
- * If a relation involves a junction table, it may be specified by [[via()]].
- * This methods may only be called in a relational context. Same is true for [[inverseOf()]], which
- * marks a relation as inverse of another relation.
+ * If a relation involves a junction table, it may be specified by [[via()]] or [[viaTable()]] method.
+ * These methods may only be called in a relational context. Same is true for [[inverseOf()]], which
+ * marks a relation as inverse of another relation and [[onCondition()]] which adds a condition that
+ * is to be added to relational query join condition.
  *
 
  */
-class ActiveQuery extends Component implements ActiveQueryInterface
+class ActiveQuery extends Query implements ActiveQueryInterface
 {
-    use QueryTrait;
-    use ActiveQueryTrait;
-    use ActiveRelationTrait;
+    /**@var Connection **/
+    public $db;
+
+
 
     /**
      * @event Event an event that is triggered when the query is initialized via [[init()]].
      */
     const EVENT_INIT = 'init';
 
-
     /**
      * Constructor.
      * @param array $modelClass the model class associated with this query
      * @param array $config configurations to be applied to the newly created query object
      */
-    public function __construct($modelClass, $config = [])
+    public function __construct($modelClass, $connection,$config = [])
     {
         $this->modelClass = $modelClass;
+        $this->db=$connection;
         parent::__construct($config);
     }
 
@@ -100,144 +100,141 @@ class ActiveQuery extends Component implements ActiveQueryInterface
     }
 
     /**
-     * Executes the query and returns all results as an array.
-     * @param Connection $db the database connection used to execute the query.
-     * If this parameter is not given, the `db` application component will be used.
+     * Executes query and returns all results as an array.
+     * @param Connection $db the DB connection used to create the DB command.
+     * If null, the DB connection returned by [[modelClass]] will be used.
      * @return array|ActiveRecord[] the query results. If the query results in nothing, an empty array will be returned.
      */
     public function all($db = null)
     {
-
+        if($db==null){$db=$this->db;}
+        return parent::all($db);
     }
 
+
+
+
     /**
-     * Executes the query and returns a single row of result.
-     * @param Connection $db the database connection used to execute the query.
-     * If this parameter is not given, the `db` application component will be used.
+     * Executes query and returns a single row of result.
+     * @param Connection $db the DB connection used to create the DB command.
+     * If null, the DB connection returned by [[modelClass]] will be used.
      * @return ActiveRecord|array|null a single row of query result. Depending on the setting of [[asArray]],
      * the query result may be either an array or an ActiveRecord object. Null will be returned
      * if the query results in nothing.
      */
     public function one($db = null)
     {
-
-    }
-
-    /**
-     * Returns the number of records.
-     * @param string $q the COUNT expression. This parameter is ignored by this implementation.
-     * @param Connection $db the database connection used to execute the query.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return integer number of records
-     */
-    public function count($q = '*', $db = null)
-    {
-        if ($this->where === null) {
-            /* @var $modelClass ActiveRecord */
-            $modelClass = $this->modelClass;
-            if ($db === null) {
-                $db = $modelClass::getDb();
-            }
-
-            return $db->executeCommand('LLEN', [$modelClass::keyPrefix()]);
-        } else {
-            return $this->executeScript($db, 'Count');
-        }
-    }
-
-    /**
-     * Returns a value indicating whether the query result contains any row of data.
-     * @param Connection $db the database connection used to execute the query.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return boolean whether the query result contains any row of data.
-     */
-    public function exists($db = null)
-    {
-        return $this->one($db) !== null;
-    }
-
-    /**
-     * Executes the query and returns the first column of the result.
-     * @param string $column name of the column to select
-     * @param Connection $db the database connection used to execute the query.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return array the first column of the query result. An empty array is returned if the query results in nothing.
-     */
-    public function column($column, $db = null)
-    {
-        // TODO add support for orderBy
-        return $this->executeScript($db, 'Column', $column);
-    }
-
-    /**
-     * Returns the number of records.
-     * @param string $column the column to sum up
-     * @param Connection $db the database connection used to execute the query.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return integer number of records
-     */
-    public function sum($column, $db = null)
-    {
-        return $this->executeScript($db, 'Sum', $column);
-    }
-
-    /**
-     * Returns the average of the specified column values.
-     * @param string $column the column name or expression.
-     * Make sure you properly quote column names in the expression.
-     * @param Connection $db the database connection used to execute the query.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return integer the average of the specified column values.
-     */
-    public function average($column, $db = null)
-    {
-        return $this->executeScript($db, 'Average', $column);
-    }
-
-    /**
-     * Returns the minimum of the specified column values.
-     * @param string $column the column name or expression.
-     * Make sure you properly quote column names in the expression.
-     * @param Connection $db the database connection used to execute the query.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return integer the minimum of the specified column values.
-     */
-    public function min($column, $db = null)
-    {
-        return $this->executeScript($db, 'Min', $column);
-    }
-
-    /**
-     * Returns the maximum of the specified column values.
-     * @param string $column the column name or expression.
-     * Make sure you properly quote column names in the expression.
-     * @param Connection $db the database connection used to execute the query.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return integer the maximum of the specified column values.
-     */
-    public function max($column, $db = null)
-    {
-        return $this->executeScript($db, 'Max', $column);
-    }
-
-    /**
-     * Returns the query result as a scalar value.
-     * The value returned will be the specified attribute in the first record of the query results.
-     * @param string $attribute name of the attribute to select
-     * @param Connection $db the database connection used to execute the query.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return string the value of the specified attribute in the first record of the query result.
-     * Null is returned if the query result is empty.
-     */
-    public function scalar($attribute, $db = null)
-    {
-        $record = $this->one($db);
-        if ($record !== null) {
-            return $record->hasAttribute($attribute) ? $record->$attribute : null;
+        $row = parent::one($db);
+        if ($row !== false) {
+            $models = $this->populate([$row]);
+            return reset($models) ?: null;
         } else {
             return null;
         }
     }
+
+    /**
+     * Creates a DB command that can be used to execute this query.
+     * @param Connection $db the DB connection used to create the DB command.
+     * If null, the DB connection returned by [[modelClass]] will be used.
+     * @return Command the created DB command instance.
+     */
+    public function createCommand($db = null)
+    {
+       /* /* @var $modelClass ActiveRecord */
+        $modelClass = $this->modelClass;
+
+        if ($db === null) {
+            $db = $modelClass::getDb();
+        }
+
+        if ($this->sql === null) {
+            list ($sql, $params) = $db->getQueryBuilder()->build($this);
+        } else {
+            $sql = $this->sql;
+            $params = $this->params;
+        }
+
+        return $db->createCommand($sql, $params);
+    }
+
+
+
+
+
+
+    /**
+     * Sets the [[asArray]] property.
+     * @param boolean $value whether to return the query results in terms of arrays instead of Active Records.
+     * @return static the query object itself
+     */
+    public function asArray($value = true)
+    {
+        // TODO: Implement asArray() method.
+    }
+
+    /**
+     * Specifies the relations with which this query should be performed.
+     *
+     * The parameters to this method can be either one or multiple strings, or a single array
+     * of relation names and the optional callbacks to customize the relations.
+     *
+     * A relation name can refer to a relation defined in [[ActiveQueryTrait::modelClass|modelClass]]
+     * or a sub-relation that stands for a relation of a related record.
+     * For example, `orders.address` means the `address` relation defined
+     * in the model class corresponding to the `orders` relation.
+     *
+     * The followings are some usage examples:
+     *
+     * ~~~
+     * // find customers together with their orders and country
+     * Customer::find()->with('orders', 'country')->all();
+     * // find customers together with their orders and the orders' shipping address
+     * Customer::find()->with('orders.address')->all();
+     * // find customers together with their country and orders of status 1
+     * Customer::find()->with([
+     *     'orders' => function ($query) {
+     *         $query->andWhere('status = 1');
+     *     },
+     *     'country',
+     * ])->all();
+     * ~~~
+     *
+     * @return static the query object itself
+     */
+    public function with()
+    {
+        // TODO: Implement with() method.
+    }
+
+    /**
+     * Specifies the relation associated with the junction table for use in relational query.
+     * @param string $relationName the relation name. This refers to a relation declared in the [[ActiveRelationTrait::primaryModel|primaryModel]] of the relation.
+     * @param callable $callable a PHP callback for customizing the relation associated with the junction table.
+     * Its signature should be `function($query)`, where `$query` is the query to be customized.
+     * @return static the relation object itself.
+     */
+    public function via($relationName, callable $callable = null)
+    {
+        // TODO: Implement via() method.
+    }
+
+    /**
+     * Finds the related records for the specified primary record.
+     * This method is invoked when a relation of an ActiveRecord is being accessed in a lazy fashion.
+     * @param string $name the relation name
+     * @param ActiveRecordInterface $model the primary model
+     * @return mixed the related record(s)
+     */
+    public function findFor($name, $model)
+    {
+        // TODO: Implement findFor() method.
+    }
+
+
+
+
+
 
 
 }

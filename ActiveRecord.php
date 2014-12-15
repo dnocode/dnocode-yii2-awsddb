@@ -1,11 +1,13 @@
 <?php
 namespace dnocode\awsddb;
 
-use Yii;
-use yii\base\InvalidConfigException;
+
+use Aws\DynamoDb\Enum\AttributeAction;
 use yii\db\BaseActiveRecord;
 use yii\helpers\Inflector;
+use Aws\DynamoDb\DynamoDbClient;
 use yii\helpers\StringHelper;
+use Yii;
 
 /**
  * ActiveRecord is the base class for classes representing relational data in terms of objects.
@@ -15,6 +17,12 @@ use yii\helpers\StringHelper;
  */
 class ActiveRecord extends BaseActiveRecord
 {
+
+
+    public static function tableName()
+    {
+        return Inflector::camel2id(StringHelper::basename(get_called_class()), '_');
+    }
     /**
      * Returns the database connection used by this AR class.
      * By default, the "ddb" application component is used as the database connection.
@@ -23,7 +31,7 @@ class ActiveRecord extends BaseActiveRecord
      */
     public static function getDb()
     {
-        return \Yii::$app->get('ddb');
+         return Yii::$app->get("ddb");
     }
 
     /**
@@ -32,49 +40,83 @@ class ActiveRecord extends BaseActiveRecord
      */
     public static function find()
     {
-        return Yii::createObject(ActiveQuery::className(), [get_called_class()]);
+        return Yii::createObject(ActiveQuery::className(), [get_called_class(),static::getDb()]);
+    }
+
+
+
+    /**
+     * Returns the schema information of the DB table associated with this AR class.
+     * @return TableSchema the schema information of the DB table associated with this AR class.
+     * @throws InvalidConfigException if the table for the AR class does not exist.
+     */
+    public static function getTableSchema()
+    {
+        throw new NotSupportedException(__METHOD__ . ' is not supported.');
     }
 
     /**
      * Returns the primary key name(s) for this AR class.
-     * This method should be overridden by child classes to define the primary key.
+     * The default implementation will return the primary key(s) as declared
+     * in the DB table that is associated with this AR class.
      *
-     * Note that an array should be returned even when it is a single primary key.
+     * If the DB table does not declare any primary key, you should override
+     * this method to return the attributes that you want to use as primary keys
+     * for this AR class.
      *
-     * @return string[] the primary keys of this record.
+     * Note that an array should be returned even for a table with single primary key.
+     *
+     * @return string[] the primary keys of the associated database table.
+     *
+     *
      */
     public static function primaryKey()
     {
-        return ['id'];
+        /** in this version you must override this method
+         * todo take this data from table describe amazon **/
+
+        throw new NotSupportedException(__METHOD__ . ' you need to override this method');
     }
 
-    /**
-     * Returns the list of all attribute names of the model.
-     * This method must be overridden by child classes to define available attributes.
-     * @return array list of attribute names.
-     */
-    public function attributes()
-    {
 
-    }
 
-    /**
-     * Declares prefix of the key that represents the keys that store this
-     * By default this method returns the class name as the table name by calling [[Inflector::camel2id()]].
-     * For example, 'Customer' becomes 'customer', and 'OrderItem' becomes
-     * 'order_item'. You may override this method if you want different key naming.
-     * @return string the prefix to apply to all AR keys
-     */
-    public static function keyPrefix()
-    {
+    public function insertAll($runValidation=true,$attributesrows=array()){ }
 
-    }
 
     /**
      * @inheritdoc
      */
     public function insert($runValidation = true, $attributes = null)
     {
+        if ($runValidation && !$this->validate($attributes)) {
+            Yii::info('Model not inserted due to validation error.', __METHOD__);
+            return false;
+        }
+
+        if (!$this->beforeSave(true)) {
+            return false;
+        }
+        //An attribute is considered dirty if its value was modified after the model was loaded
+        $values = $this->getDirtyAttributes($attributes);
+
+        if (empty($values)) {
+
+            foreach ($this->getPrimaryKey(true) as $key => $value) {
+
+                $values[$key] = $value;
+            }
+        }
+
+        $db = static::getDb();
+
+        $db->createCommand($this->tableName(),AttributeAction::PUT,$values);
+
+        $changedAttributes = array_fill_keys(array_keys($values), null);
+
+        $this->setOldAttributes($values);
+
+        $this->afterSave(true, $changedAttributes);
+
 
     }
 
@@ -91,30 +133,7 @@ class ActiveRecord extends BaseActiveRecord
      * Please refer to [[ActiveQuery::where()]] on how to specify this parameter.
      * @return integer the number of rows updated
      */
-    public static function updateAll($attributes, $condition = null)
-    {
-
-
-    }
-
-    /**
-     * Updates the whole table using the provided counter changes and conditions.
-     * For example, to increment all customers' age by 1,
-     *
-     * ~~~
-     * Customer::updateAllCounters(['age' => 1]);
-     * ~~~
-     *
-     * @param array $counters the counters to be updated (attribute name => increment value).
-     * Use negative values if you want to decrement the counters.
-     * @param array $condition the conditions that will be put in the WHERE part of the UPDATE SQL.
-     * Please refer to [[ActiveQuery::where()]] on how to specify this parameter.
-     * @return integer the number of rows updated
-     */
-    public static function updateAllCounters($counters, $condition = null)
-    {
-
-    }
+    public static function updateAll($attributes, $condition = null){}
 
     /**
      * Deletes rows in the table using the provided conditions.
@@ -130,12 +149,38 @@ class ActiveRecord extends BaseActiveRecord
      * Please refer to [[ActiveQuery::where()]] on how to specify this parameter.
      * @return integer the number of rows deleted
      */
-    public static function deleteAll($condition = null)
+    public static function deleteAll($condition = null){}
+
+
+    /**
+     * Populates an active record object using a row of data from the database/storage.
+     *
+     * This is an internal method meant to be called to create active record objects after
+     * fetching data from the database. It is mainly used by [[ActiveQuery]] to populate
+     * the query results into active records.
+     *
+     * When calling this method manually you should call [[afterFind()]] on the created
+     * record to trigger the [[EVENT_AFTER_FIND|afterFind Event]].
+     *
+     * @param BaseActiveRecord $record the record to be populated. In most cases this will be an instance
+     * created by [[instantiate()]] beforehand.
+     * @param array $row attribute values (name => value)
+     */
+    public static function populateRecord($record, $row)
     {
+        $columns = array_flip($record->attributes());
+        foreach ($row as $name =>  $type_value) {
+            $value=current($type_value);
+            if (isset($columns[$name])) {
+                $record->setAttribute($name, $value);
+                $record->setOldAttribute($name,$value);
+            } elseif ($record->canSetProperty($name)) {
+                $record->$name = $value;
+            }
+        }
+
 
     }
-
-
 
 
 
