@@ -65,4 +65,9 @@ class GetCommand extends Command {
        $this->result=$this->aws()->$method($this->amz_input);
 
     }
+
+    function toAmazonRequestArray()
+    {
+        // TODO: Implement toAmazonRequestArray() method.
+    }
 }

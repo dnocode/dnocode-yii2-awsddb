@@ -3,7 +3,7 @@
 namespace dnocode\awsddb;
 
 use Aws\DynamoDb\DynamoDbClient;
-use dnocode\awsddb\Command;
+use dnocode\awsddb\ddb\builders\CommandBuilder;
 use yii\base\Component;
 use Aws\DynamoDb\Enum\AttributeAction;
 
@@ -59,6 +59,9 @@ class Connection extends Component
 
     public function aws(){return $this->_amzclient;}
 
+    /**
+     * @return CommandBuilder
+     */
     public function getCommandBuilder(){
 
         if ($this->_builder === null) {
@@ -69,16 +72,29 @@ class Connection extends Component
     }
 
 
+    /**
+     * this methods create a transaction for a query and
+     * execute it
+     * @param $query
+     * @param array $params
+     * @return mixed
+     */
+    public function createExecQueryCommand($query,$params=array()){
 
-    public function createQueryCommand($query,$params=array()){
-
-        return  $this->createTransactionInternal($query,null,"QUERY",null,$params);
+        return  $this->createExecTransactionInternal($query,null,"QUERY",null,$params);
 
     }
 
-    public function createCommand($tablename,$attributeAction,$attributes=array(),$params=array()){
+    /**
+     * @param $tablename
+     * @param AttributeAction $attributeAction
+     * @param array $attributes
+     * @param array $params
+     * @return Transaction
+     */
+    public function createExecCommand($tablename,$attributeAction,$attributes=array(),$params=array()){
 
-        return  $this->createTransactionInternal(null,$tablename,$attributeAction,$attributes,$params);
+        return  $this->createExecTransactionInternal(null,$tablename,$attributeAction,$attributes,$params);
 
     }
 
@@ -91,27 +107,21 @@ class Connection extends Component
      * @param array $params
      * @return Transacetion
      */
-     function createTransactionInternal($query,$tablename,$attributeAction,$attributes,$params)
+     function createExecTransactionInternal($query,$tablename,$attributeAction,$attributes,$params)
     {
         /** @var  Transact $transaction */
-       $transactionExist=$this->beginTransaction($tablename);
-
+       $transactionExist=$this->createTransactionIfNotExist($tablename);
        $transaction=$this->getTransaction($tablename);
-
-        $config=['table'=>$tablename,
-                 'attributes'=>$attributes,
-                 'params'=>$params,
-                  ];
-
+        /**command configurator**/
+        $config=['table'=>$tablename,'attributes'=>$attributes,'params'=>$params,];
+        /**command class chooser**/
         switch($attributeAction){
-
             case AttributeAction::PUT:
-
                 /**create command insert **/
                 $commandClassName='dnocode\awsddb\PutCommand';
                 break;
-
             case AttributeAction::DELETE:
+
                 $commandClassName='dnocode\awsddb\DelCommand';
                 break;
             default:
@@ -138,20 +148,33 @@ class Connection extends Component
      * @param $tablename
      * @return bool
      */
-    public function beginTransaction($uid){
+    public function beginTransaction($uid=null){
+    $this->createTransactionIfNotExist($uid);
+      return $this->_transactions[$uid];
+    }
 
+    /**
+     * create transaction if douen`t exists
+     * @param $uid
+     * @return bool
+     */
+    public function createTransactionIfNotExist($uid){
+        $uid=$uid?$uid:"t".time()/10000;
         /** @var  Transact $transaction */
-        $transactionExist=( count($this->_transactions)>0&&array_key_exists($uid,$this->_transactions));
-
+        $transactionExist=$this->transactionExist($uid);
         $transactionExist?($this->_transactions[$uid]):($this->_transactions[$uid]=new Transact(['db'=>$this,"uid"=>$uid]));
-
         return $transactionExist;
-
     }
 
 
-    public function removeTransaction($uid){unset($this->_transactions[$uid]);}
+    /**
+     * check if transaction alredy exist
+     * @param $uid
+     * @return bool
+     */
+    public function transactionExist($uid){ return ( count($this->_transactions)>0&&array_key_exists($uid,$this->_transactions));  }
 
+    public function removeTransaction($uid){unset($this->_transactions[$uid]);}
 
     public function getTransaction($uid){ return array($uid,$this->_transactions)?$this->_transactions[$uid]:null;}
 

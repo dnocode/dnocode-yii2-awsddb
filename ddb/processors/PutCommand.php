@@ -32,4 +32,9 @@ class PutCommand  extends Command{
         $this->result==$this->aws()->putItem($this->amz_input);
 
     }
+
+    function toAmazonRequestArray()
+    {
+        // TODO: Implement toAmazonRequestArray() method.
+    }
 }

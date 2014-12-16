@@ -3,6 +3,7 @@
 
 namespace dnocode\awsddb;
 
+use Aws\ImportExport\Exception\InvalidParameterException;
 use Yii;
 use yii\base\Component;
 use dnocode\awsddb\Connection;
@@ -45,6 +46,14 @@ class Query extends Component implements QueryInterface
      */
     public $modelClass;
 
+
+    /**
+     * @var array the table(s) to be selected from. For example, `['user', 'post']`.
+     * This is used to construct the FROM clause in a SQL statement.
+     * @see from()
+     */
+    public $select;
+
     /**
      * @var array the table(s) to be selected from. For example, `['user', 'post']`.
      * This is used to construct the FROM clause in a SQL statement.
@@ -59,6 +68,12 @@ class Query extends Component implements QueryInterface
 
     public $indexBy;
 
+    /**
+     * @var string is the index choice for dynamo db
+     */
+    public $indexName;
+
+
     public $params = [];
 
 
@@ -71,7 +86,7 @@ class Query extends Component implements QueryInterface
     public function createCommand($db = null)
     {
 
-        $db->createQueryCommand($this,$this->params);
+        $db->createExecQueryCommand($this,$this->params);
 
     }
 
@@ -155,14 +170,43 @@ class Query extends Component implements QueryInterface
     public function all($db = null)
     {
         /** @var Transact $transaction */
-        $transaction = $db->createQueryCommand($this);
-        /** @var Command $cmd */
-        $cmd=$transaction->last_executed;
+        $transaction = $db->createExecQueryCommand($this);
 
-        $items=$cmd->result->toArray();
-        $items=$items["Items"];
-        return $this->populate($items);
+        return $this->populate($transaction->getResult());
     }
+
+
+
+  
+    /**
+     * Executes the query and returns a single row of result.
+     * @param Connection $db the database connection used to generate the SQL statement.
+     * If this parameter is not given, the `db` application component will be used.
+     * @return array|boolean the first row (in terms of an array) of the query result. False is returned if the query
+     * results in nothing.
+     */
+    public function one($db = null)
+    {
+        /** @var Transact $transaction */
+        $transaction = $db->createExecQueryCommand($this);
+
+        return $transaction->getResult();
+    }
+
+
+
+    /**
+     * Returns a value indicating whether the query result contains any row of data.
+     * @param Connection $db the database connection used to generate the SQL statement.
+     * If this parameter is not given, the `db` application component will be used.
+     * @return boolean whether the query result contains any row of data.
+     */
+    public function exists($db = null)
+    {
+       //todo
+    }
+
+
 
     /**
      * Converts the raw query results into the format as specified by this query.
@@ -211,36 +255,10 @@ class Query extends Component implements QueryInterface
     }
 
 
-  
-    /**
-     * Executes the query and returns a single row of result.
-     * @param Connection $db the database connection used to generate the SQL statement.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return array|boolean the first row (in terms of an array) of the query result. False is returned if the query
-     * results in nothing.
-     */
-    public function one($db = null)
-    {
-        return $this->createCommand($db)->queryOne();
-    }
 
 
 
-    /**
-     * Returns a value indicating whether the query result contains any row of data.
-     * @param Connection $db the database connection used to generate the SQL statement.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return boolean whether the query result contains any row of data.
-     */
-    public function exists($db = null)
-    {
-       //todo
-    }
-
-
-
-
-     /** just for mainteins compatibility */
+    /** just for mainteins compatibility */
     public function select($columns, $option = null)
     {
 
@@ -291,7 +309,7 @@ class Query extends Component implements QueryInterface
      *
      * @inheritdoc
      *
-     * @param string|array $condition the conditions that should be put in the WHERE part.
+     * @param array $condition the conditions that should be put in the WHERE part.
      * @param array $params the parameters (name => value) to be bound to the query.
      * @return static the query object itself
      * @see andWhere()
@@ -300,6 +318,7 @@ class Query extends Component implements QueryInterface
      */
     public function where($condition, $params = [])
     {
+        if( is_array($condition)==false){throw new InvalidParameterException;}
         $this->where = $condition;
         $this->addParams($params);
         return $this;

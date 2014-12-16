@@ -56,24 +56,16 @@ class ActiveRecord extends BaseActiveRecord
     }
 
     /**
-     * Returns the primary key name(s) for this AR class.
-     * The default implementation will return the primary key(s) as declared
-     * in the DB table that is associated with this AR class.
-     *
-     * If the DB table does not declare any primary key, you should override
-     * this method to return the attributes that you want to use as primary keys
-     * for this AR class.
-     *
-     * Note that an array should be returned even for a table with single primary key.
-     *
-     * @return string[] the primary keys of the associated database table.
-     *
-     *
+     * you must override this method for indicates
+     * the primary key of dynamo
+     * the first one its a hash key
+     * the second its the range (optional)
+     * @return \string[]|void
+     * @throws NotSupportedException
      */
     public static function primaryKey()
     {
-        /** in this version you must override this method
-         * todo take this data from table describe amazon **/
+
 
         throw new NotSupportedException(__METHOD__ . ' you need to override this method');
     }
@@ -109,7 +101,7 @@ class ActiveRecord extends BaseActiveRecord
 
         $db = static::getDb();
 
-        $db->createCommand($this->tableName(),AttributeAction::PUT,$values);
+        $db->createExecCommand($this->tableName(),AttributeAction::PUT,$values);
 
         $changedAttributes = array_fill_keys(array_keys($values), null);
 

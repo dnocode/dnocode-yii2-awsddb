@@ -6,7 +6,7 @@
  * Time: 5:59 PM
  */
 
-namespace dnocode\awsddb;
+namespace dnocode\ddb\builders;
 
 use Aws\ImportExport\Exception\InvalidParameterException;
 use Yii;
@@ -27,16 +27,60 @@ class Transact extends \yii\base\Object {
     public function commit()
     {
         Yii::info("committing transaction uid: $this->uid");
-        /** @var Command $cmd  */
-        foreach(  $this->_commands as $uid=>$cmd ){
+
+        /**unique commands**/
+       if(count($this->_commands)==1){
+
+            $cmd=reset($this->_commands);
             $cmd->doIt();
             $this->last_executed=$cmd;
-        }
+
+       }else{
+
+           //todo
+           $this->createAndExecuteMasterCommands();
+       }
 
         Yii::info("transaction   uid: $this->uid committed");
 
         $this->db->removeTransaction($this->uid);
+
         Yii::info("transaction   uid: $this->uid removed");
+    }
+
+
+
+     public function getResult(){
+
+         if(!$this->last_executed){return false;}
+
+         /** @var Command $cmd */
+         $cmd=$this->last_executed;
+
+         $items=$cmd->result->toArray();
+
+         return $items["Items"];
+
+     }
+
+
+
+    /**
+     * todo
+     * this method will divide the commands in write commands [put and delete]
+     * and get commands (query)
+     * then will be creates  a master commands with the amazon input as
+     * you can see at @http://docs.aws.amazon.com/aws-sdk-php/latest/class-Aws.DynamoDb.DynamoDbClient.html#_batchWriteItem
+     * one for the write requests
+     * one for the query requests
+     * the last one will be store in the last command of the transaction
+     */
+    private function createAndExecuteMasterCommands(){
+
+        $amz_input=array();
+        /** @var Command $cmd   more commands different nature */
+        /* foreach(  $this->_commands as $uid=>$cmd ){
+         }*/
     }
 
     public function length(){ return count($this->_commands); }

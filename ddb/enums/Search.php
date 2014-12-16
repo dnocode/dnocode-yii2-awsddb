@@ -1,6 +1,6 @@
 <?php
 
-namespace dnocode\awsddb;
+namespace dnocode\awsddb\enums;
 
 use Aws\Common\Enum;
 

@@ -1,12 +1,13 @@
 <?php
 
-namespace dnocode\awsddb;
+namespace dnocode\awsddb\ddb\builders;
 
 use Aws\DynamoDb\Enum\ComparisonOperator;
 use yii\base\InvalidParamException;
 use yii\base\NotSupportedException;
 use Aws\DynamoDb\Model\Item;
 use dnocode\awsddb\Search;
+use yii\helpers\ArrayHelper;
 
 /**
  * CommandBuilder creates command for dynamo db
@@ -82,10 +83,11 @@ class CommandBuilder extends \yii\base\Object
     {
         $config ['db']=$this->db;
 
-        $amz_input=$query!=null? $this->buildAWSGetInput($query):$this->buildAWSInput($config);
+        $amz_input=$query!=null? $this->buildAWSGetInput($query,$config):$this->buildPutAWSInput($config);
+
         unset($config['attributes']);
+
         unset($config['table']);
-        $config["type"]=empty($query->where)?Search::SCAN:Search::QUERY;
 
         $config['amz_input']=$amz_input;
 
@@ -99,17 +101,23 @@ class CommandBuilder extends \yii\base\Object
     }
 
     /**
-     * @param Query $qry
+     * creates a InputCommand Object From Query
+     * @param $qry
+     * @param $config
+     * @return array
      */
-    private function buildAWSGetInput($qry){
+    private function buildAWSGetInput($qry,&$config){
 
         /** todo  transform aws input in object that create array after */
         $aws_input=array();
 
         if (empty($qry->from)) {
             /* @var $modelClass ActiveRecord */
+
             $modelClass = $qry->modelClass;
+
             $tableName = $modelClass::tableName();
+
             $qry->from = [$tableName];
         }
 
@@ -118,16 +126,19 @@ class CommandBuilder extends \yii\base\Object
 
         if(!empty($qry->where)){
 
+            $config["type"]=Search::SCAN;
+
+            if( $this->targetContainsAtLeastOneKey($modelClass::primaryKey(),$qry->where)){  $config["type"]=Search::QUERY; }
+
+
+
+            //TO CREATE Scan input or query input
             //todo
            // $aws_input["KeyConditions"]=array("AttributeValueList"=>
            //     array(),"ComparisonOperator"=>ComparisonOperator::EQ);
-        } else{
-         //scan
 
 
-
-
-            }
+        }
 
 
         return $aws_input;
@@ -137,14 +148,30 @@ class CommandBuilder extends \yii\base\Object
         }
 
     /**
-     * @param  array $config
+     * /**
+     * creates a InputCommand Object
      */
-    private function buildAWSInput(&$config){
+    private function buildPutAWSInput(&$config){
         /** @var Item $item */
         $item=Item::fromArray($config['attributes'],$config['table']);
         return array("TableName"=>$item->getTableName(),"Item"=>$item->toArray());
 
     }
+
+
+    private function targetContainsAtLeastOneKey($keysArray,$targetArray){
+            $contain=false;
+
+            foreach($keysArray as $key){
+
+                $contain=array_key_exists($key,$targetArray);
+
+                if ($contain==true) { break; }
+            }
+
+        return $contain;
+
+}
 
 
 }
