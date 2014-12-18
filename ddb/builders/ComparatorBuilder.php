@@ -1,53 +1,188 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: dino
- * Date: 12/16/14
- * Time: 9:54 PM
- */
-
-namespace dnocode\ddb\builders;
-
+namespace dnocode\awsddb\ddb\builders;
 
 use Aws\CloudWatch\Enum\ComparisonOperator;
+use Aws\DynamoDb\Enum\Type;
 use Aws\ImportExport\Exception\InvalidParameterException;
+use ComparatorBuilder\ConditionsBuilder;
 use dnocode\awsddb\ddb\inputs\AttrValueCondition;
 use yii\base\Object;
 use yii\helpers\ArrayHelper;
 
 class ComparatorBuilder extends Object{
 
-    private $_current_key;
-    /**
-     * @var array
-     */
-    private $_attr_values_conditions=array();
+    /**util properties*/
+    protected $_current_key;
+    /***Builder properties****/
+    /** @var  ConditionsBuilder $_conditionsBuilder */
+    protected $_conditionsBuilder;
+    /**Output properties**/
+    protected $_attr_values_conditions=array();
+    protected $_cond_choosen;
+
+
+    public function andd($attributeName=""){
+
+        return $this->addAttribute($attributeName,"AND");
+    }
+
+    public function orr($attributeName=""){
+
+            return $this->addAttribute($attributeName,"OR");
+    }
 
     /**
-     * util for add attributes value condition
      * @param string $name
+     * @return ConditionsBuilder
+     * @throws \Aws\ImportExport\Exception\InvalidParameterException
      */
-    public function addAttr($name=""){
+    private function addAttribute($attributeName="",$conditionalOperator="AND"){
 
-          if(count($name)==0){throw new InvalidParameterException("name is required!!");}
-           $this->_current_key=$name;
-           $this->_attr_values_conditions[$name]=new AttrValueCondition();
+        if(count($attributeName)==0){throw new InvalidParameterException("name is required!!");}
+        $this->_conditionsBuilder=$this->_conditionsBuilder==null?new ConditionsBuilder():$this->_conditionsBuilder;
+        $this->_current_key=$attributeName;
+        $this->_attr_values_conditions[$attributeName]=new AttrValueCondition();
+        $this->_attr_values_conditions[$attributeName]->name=$attributeName;
+        $this->_conditionsBuilder->set($this,$this->current());
+        $this->_cond_choosen=$conditionalOperator;
+        return  $this->_conditionsBuilder ;
+
     }
 
-    public function eq($value,$type=""){
+    public function all(){   throw new NotSupportedException(__METHOD__ . ' is not supported.');}
 
-          $this->current()->add($value,$type);
-          $this->current()->comparison_operator=\Aws\DynamoDb\Enum\ComparisonOperator::EQ;
-    }
-
+    public function one(){   throw new NotSupportedException(__METHOD__ . ' is not supported.');}
 
     /**
      * @return AttrValueCondition
      */
     private function current(){return $this->_attr_values_conditions[$this->_current_key];}
 
+    /**
+     * @param AttrValueCondition $attribute
+     */
+    public function injectAttribute($attribute){
+
+        $this->_attr_values_conditions[$attribute->name]=$attribute;
+    }
+
+
+
+    public function getAttribute($attributeName){
+
+        if(!array_key_exists($attributeName,$this->_attr_values_conditions)){
+            throw new InvalidParameterException("attribute: $attributeName not found");
+        }
+
+        return   $this->_attr_values_conditions [$attributeName];
+    }
+
+
+
+        public function columns(){
+
+        $columns=array();
+        /** @var AttrValueCondition $attr */
+        foreach($this->_attr_values_conditions as $key=>$attr){
+            $columns[$attr->name]=null;
+
+        }
+            return $columns;
+    }
+
+    public function toArray(){
+
+       /* 'AttributeName' => array(
+            'AttributeValueList' => array(
+                array(
+                    'S' => 'string',
+                    'N' => 'string',
+                    'B' => 'string',
+                    'SS' => array('string', ... ),
+                    'NS' => array('string', ... ),
+                    'BS' => array('string', ... ),
+                    'M' => array(
+                        // Associative array of custom 'AttributeName' key names
+                        'AttributeName' => array(
+                            // Associative array of custom key value pairs
+                        ),
+                        // ... repeated
+                    )*/
+
+    }
 
 
 
 
-} 
+
+}
+
+namespace ComparatorBuilder;
+use yii\base\Object;
+use Aws\DynamoDb\Enum\Type;
+use dnocode\awsddb\ddb\builders\ComparatorBuilder;
+use dnocode\awsddb\ddb\inputs\AttrValueCondition;
+
+class ConditionsBuilder extends Object{
+
+    /** @var  ComparatorBuilder $_cb */
+    private $_cb;
+    /** @var  AttrValueCondition $current */
+    private $_current;
+
+
+    /**
+     * @param ComparatorBuilder $cb
+     * @param AttrValueCondition $currentElement
+     */
+    public function set($cb,&$currentElement){
+        $this->_cb=$cb;
+        $this->_current=$currentElement;
+    }
+
+
+    /**
+     * @param ComparatorBuilder $cb
+     * @param $currentElement
+     * @param $value
+     * @param Type $type
+     */
+    public function eq($value,$type=null){
+
+        $this->_current->add($value,$type);
+        $this->_current->comparison_operator=\Aws\DynamoDb\Enum\ComparisonOperator::EQ;
+        return $this->_cb;
+    }
+
+
+    public function gt($value,$type=null){
+
+        $this->_current->add($value,$type);
+        $this->_current->comparison_operator=\Aws\DynamoDb\Enum\ComparisonOperator::GT;
+        return $this->_cb;
+    }
+
+    public function ge($value,$type=null){
+
+        $this->_current->add($value,$type);
+        $this->_current->comparison_operator=\Aws\DynamoDb\Enum\ComparisonOperator::GE;
+        return $this->_cb;
+    }
+
+
+    public function le($value,$type=null){
+
+        $this->_current->add($value,$type);
+        $this->_current->comparison_operator=\Aws\DynamoDb\Enum\ComparisonOperator::LE;
+        return $this->_cb;
+    }
+
+    public function lt($value,$type=null){
+
+        $this->_current->add($value,$type);
+        $this->_current->comparison_operator=\Aws\DynamoDb\Enum\ComparisonOperator::LT;
+        return $this->_cb;
+    }
+}
+
+

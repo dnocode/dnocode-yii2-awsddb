@@ -1,6 +1,6 @@
 <?php
 
-namespace dnocode\awsddb;
+namespace dnocode\awsddb\ar;
 
 use Aws\DynamoDb\DynamoDbClient;
 use dnocode\awsddb\ddb\builders\CommandBuilder;
@@ -100,7 +100,7 @@ class Connection extends Component
 
 
     /**
-     * @param $query
+     * @param Query $query
      * @param $tablename
      * @param $attributeAction
      * @param array $attributes
@@ -109,30 +109,33 @@ class Connection extends Component
      */
      function createExecTransactionInternal($query,$tablename,$attributeAction,$attributes,$params)
     {
+        /* @var ActiveRecord $query->modelClass  */
+        $tablename=$tablename==null&&$query!=null?$query->tableName():$tablename;
+
         /** @var  Transact $transaction */
        $transactionExist=$this->createTransactionIfNotExist($tablename);
        $transaction=$this->getTransaction($tablename);
+
         /**command configurator**/
-        $config=['table'=>$tablename,'attributes'=>$attributes,'params'=>$params,];
+        $config=['table'=>$tablename,'attributes'=>$attributes,'params'=>$params];
+
         /**command class chooser**/
         switch($attributeAction){
             case AttributeAction::PUT:
                 /**create command insert **/
-                $commandClassName='dnocode\awsddb\PutCommand';
+                $commandClassName='dnocode\awsddb\ddb\processor\PutCommand';
                 break;
             case AttributeAction::DELETE:
 
-                $commandClassName='dnocode\awsddb\DelCommand';
+                $commandClassName='dnocode\awsddb\ddb\processors\DelCommand';
                 break;
             default:
                 /**query Command**/
-                $commandClassName='dnocode\awsddb\GetCommand';
+                $commandClassName='dnocode\awsddb\ddb\processors\GetCommand';
         }
 
         $config["class"]=$commandClassName;
-
         $cmd=  $this->getCommandBuilder()->build($query,$config,$params);
-
         $transaction->addCommand($cmd);
 
         if(!$transactionExist){ $transaction->commit();}
@@ -159,7 +162,8 @@ class Connection extends Component
      * @return bool
      */
     public function createTransactionIfNotExist($uid){
-        $uid=$uid?$uid:"t".time()/10000;
+
+        $uid=$uid?$uid:"t".count($this->_transactions)."-".substr("".time()/10000,8);
         /** @var  Transact $transaction */
         $transactionExist=$this->transactionExist($uid);
         $transactionExist?($this->_transactions[$uid]):($this->_transactions[$uid]=new Transact(['db'=>$this,"uid"=>$uid]));

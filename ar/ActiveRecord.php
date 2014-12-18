@@ -1,5 +1,5 @@
 <?php
-namespace dnocode\awsddb;
+namespace dnocode\awsddb\ar;
 
 
 use Aws\DynamoDb\Enum\AttributeAction;
@@ -67,12 +67,10 @@ class ActiveRecord extends BaseActiveRecord
     {
 
 
+
         throw new NotSupportedException(__METHOD__ . ' you need to override this method');
     }
 
-
-
-    public function insertAll($runValidation=true,$attributesrows=array()){ }
 
 
     /**

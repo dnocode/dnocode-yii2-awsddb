@@ -6,9 +6,10 @@
  * Time: 3:41 PM
  */
 
-namespace dnocode\awsddb;
+namespace dnocode\awsddb\ddb\processors;
 
 use Aws\CloudFront\Exception\Exception;
+use dnocode\awsddb\ddb\inputs\AWSInput;
 use Guzzle\Service\Resource\Model;
 use Item;
 use Yii;
@@ -25,6 +26,9 @@ abstract class Command extends Component
     public $db;
     /** @var  Model */
     public $result;
+    /**
+     * @var AWSInput
+     */
     public $amz_input;
     public $params;
     public $uid;
@@ -36,40 +40,7 @@ abstract class Command extends Component
 
     abstract function execute();
 
-    /**
-     * transform a command object in this amazon input
-     *
-     * 'PutRequest' => array(
-    // Item is required
-    'Item' => array(
-    // Associative array of custom 'AttributeName' key names
-    'AttributeName' => array(
-    'S' => 'string',
-    'N' => 'string',
-    'B' => 'string',
-    'SS' => array('string', ... ),
-    'NS' => array('string', ... ),
-    'BS' => array('string', ... ),
-    'M' => array(
-    // Associative array of custom 'AttributeName' key names
-    'AttributeName' => array(
-    // Associative array of custom key value pairs
-    ),
-    // ... repeated
-    ),
-    'L' => array(
-    array(
-    // Associative array of custom key value pairs
-    ),
-    // ... repeated
-    ),
-    'NULL' => true || false,
-    'BOOL' => true || false,
-    ),
-    // ... repeated
-    ),
-     * @return mixed
-     */
+
     abstract function toAmazonRequestArray();
 
     public function validate(){

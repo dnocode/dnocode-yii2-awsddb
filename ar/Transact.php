@@ -6,7 +6,7 @@
  * Time: 5:59 PM
  */
 
-namespace dnocode\ddb\builders;
+namespace dnocode\awsddb\ar;
 
 use Aws\ImportExport\Exception\InvalidParameterException;
 use Yii;

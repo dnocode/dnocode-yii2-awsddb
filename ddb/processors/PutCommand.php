@@ -6,7 +6,7 @@
  * Time: 11:34 AM
  */
 
-namespace dnocode\awsddb;
+namespace dnocode\awsddb\ddb\processors;
 
 /**
  * Class PutCommand

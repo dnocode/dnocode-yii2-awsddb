@@ -9,135 +9,90 @@
 namespace dnocode\awsddb\ddb\inputs;
 
 
-class AWSInput {
+use Aws\DynamoDb\Enum\Select;
+
+abstract class AWSInput {
 
     protected  $_tablename;
     /** @var  string $indexName index choice name */
     protected $_indexname;
+
+    protected $_consistent_read=true;
     /** @var  integer $limit */
-    protected $limit;
-    /** @var  Select $Select*/
+    protected $_limit;
+    /** @var   Select | array $_select */
     protected $_select;
     /** @var attributes list */
-    protected  $attributes_get=[];
+    protected  $_attributes_get=[];
     /** @var attributes to insert */
-    protected  $attributes_put=[];
+    protected  $_attributes_put=[];
+
+    /**
+     * @param $tablename
+     * @return AWSInput $this
+     */
+    public function consistent($value=true){
+
+        $this->_consistent_read=$value;
+       return $this;
+
+    }
+        /**
+     * @param $tablename
+     * @return AWSInput $this
+     */
+    public function select($attributes=[]){
+
+        if(empty($attributes)){
+            $this->_select=empty($this->_indexname)?Select::ALL_ATTRIBUTES:Select::ALL_PROJECTED_ATTRIBUTES;
+            return $this;
+        }
+        $this->_select=Select::SPECIFIC_ATTRIBUTES;
+        $this->_attributes_get=$attributes;
+        return $this;
+    }
 
 
+    public function count(){
 
-    public function tableName($tablename){return $this;}
-    public function indexName($indexName){return $this;}
-    public function limit($number){return $this;}
-
-
-
+        $this->_select=Select::COUNT;
+        return $this;
+    }
 
 
-    /*    // TableName is required
-    'TableName' => 'string',
-    'IndexName' => 'string',
-    'AttributesToGet' => array('string', ... ),
-    'Limit' => integer,
-    'Select' => 'string',
-    'ScanFilter' => array(
-        // Associative array of custom 'AttributeName' key names
-    'AttributeName' => array(
-    'AttributeValueList' => array(
-    array(
-    'S' => 'string',
-    'N' => 'string',
-    'B' => 'string',
-    'SS' => array('string', ... ),
-    'NS' => array('string', ... ),
-    'BS' => array('string', ... ),
-    'M' => array(
-        // Associative array of custom 'AttributeName' key names
-    'AttributeName' => array(
-        // Associative array of custom key value pairs
-    ),
-        // ... repeated
-    ),
-    'L' => array(
-    array(
-        // Associative array of custom key value pairs
-    ),
-        // ... repeated
-    ),
-    'NULL' => true || false,
-    'BOOL' => true || false,
-    ),
-        // ... repeated
-    ),
-        // ComparisonOperator is required
-    'ComparisonOperator' => 'string',
-    ),
-        // ... repeated
-    ),
-    'ConditionalOperator' => 'string',
-    'ExclusiveStartKey' => array(
-        // Associative array of custom 'AttributeName' key names
-    'AttributeName' => array(
-    'S' => 'string',
-    'N' => 'string',
-    'B' => 'string',
-    'SS' => array('string', ... ),
-    'NS' => array('string', ... ),
-    'BS' => array('string', ... ),
-    'M' => array(
-        // Associative array of custom 'AttributeName' key names
-    'AttributeName' => array(
-        // Associative array of custom key value pairs
-    ),
-        // ... repeated
-    ),
-    'L' => array(
-    array(
-        // Associative array of custom key value pairs
-    ),
-        // ... repeated
-    ),
-    'NULL' => true || false,
-    'BOOL' => true || false,
-    ),
-        // ... repeated
-    ),
-    'ReturnConsumedCapacity' => 'string',
-    'TotalSegments' => integer,
-    'Segment' => integer,
-    'ProjectionExpression' => 'string',
-    'FilterExpression' => 'string',
-    'ExpressionAttributeNames' => array(
-        // Associative array of custom 'ExpressionAttributeNameVariable' key names
-    'ExpressionAttributeNameVariable' => 'string',
-        // ... repeated
-    ),
-    'ExpressionAttributeValues' => array(
-        // Associative array of custom 'ExpressionAttributeValueVariable' key names
-    'ExpressionAttributeValueVariable' => array(
-    'S' => 'string',
-    'N' => 'string',
-    'B' => 'string',
-    'SS' => array('string', ... ),
-    'NS' => array('string', ... ),
-    'BS' => array('string', ... ),
-    'M' => array(
-        // Associative array of custom 'AttributeName' key names
-    'AttributeName' => array(
-        // Associative array of custom key value pairs
-    ),
-        // ... repeated
-    ),
-    'L' => array(
-    array(
-        // Associative array of custom key value pairs
-    ),
-        // ... repeated
-    ),
-    'NULL' => true || false,
-    'BOOL' => true || false,
-    ),
-        // ... repeated
-    ),
-    ));*/
+    /**
+     * @param $tablename
+     * @return AWSInput $this
+     */
+    public function tableName($tablename){
+    $this->_tablename=$tablename;
+        return $this;
+    }
+
+    /**
+     * @param $indexName
+     * @return AWSInput $this
+     */
+    public function indexName($indexName){
+    $this->_indexname=$indexName;
+        return $this;
+    }
+
+    /**
+     * @param $number
+     * @return AWSInput $this
+     */
+    public function limit($number){
+        $this->_limit=$number;
+        return $this;
+    }
+
+
+    /**
+     * @return AWSFilter
+     */
+    public abstract function filter();
+
+
 
 } 

@@ -3,11 +3,16 @@
 namespace dnocode\awsddb\ddb\builders;
 
 use Aws\DynamoDb\Enum\ComparisonOperator;
+use dnocode\awsddb\ar\ActiveRecord;
+use dnocode\awsddb\ddb\inputs\AWSInput;
+use dnocode\awsddb\ddb\inputs\QueryInput;
+use dnocode\awsddb\ddb\inputs\ScanInput;
 use yii\base\InvalidParamException;
 use yii\base\NotSupportedException;
 use Aws\DynamoDb\Model\Item;
-use dnocode\awsddb\Search;
+use dnocode\awsddb\ddb\enums\Search;
 use yii\helpers\ArrayHelper;
+use dnocode\awsddb\ar\Query;
 
 /**
  * CommandBuilder creates command for dynamo db
@@ -79,10 +84,11 @@ class CommandBuilder extends \yii\base\Object
      * @param Query $query
      * @return Command
      */
-    public function build($query,&$config,$params=array())
+    public function build($query,&$config)
     {
         $config ['db']=$this->db;
 
+        /** @var AWSInput $amz_input */
         $amz_input=$query!=null? $this->buildAWSGetInput($query,$config):$this->buildPutAWSInput($config);
 
         unset($config['attributes']);
@@ -102,49 +108,65 @@ class CommandBuilder extends \yii\base\Object
 
     /**
      * creates a InputCommand Object From Query
-     * @param $qry
+     * @param Query $qry
      * @param $config
-     * @return array
+     * @return AWSInput
      */
     private function buildAWSGetInput($qry,&$config){
 
         /** todo  transform aws input in object that create array after */
-        $aws_input=array();
+        $inputObject=new ScanInput();
 
-        if (empty($qry->from)) {
-            /* @var $modelClass ActiveRecord */
 
-            $modelClass = $qry->modelClass;
+        /**there is a comparator
+         * means that was used andWhere or or Orwhere
+         *  where**/
+        if($qry->comparator!=null){
 
-            $tableName = $modelClass::tableName();
+            $qry->where=$qry->comparator->columns();
 
-            $qry->from = [$tableName];
+
         }
-
-
-        $aws_input["TableName"]=reset($qry->from);
 
         if(!empty($qry->where)){
 
+            /** @var ActiveRecord $modelClass */
+            $modelClass=$qry->modelClass;
             $config["type"]=Search::SCAN;
 
-            if( $this->targetContainsAtLeastOneKey($modelClass::primaryKey(),$qry->where)){  $config["type"]=Search::QUERY; }
+            /**check if  the conditions columns are primary key too**/
+            if( $this->targetContainsAtLeastOneKey($modelClass::primaryKey(),$qry->where)){
+                $config["type"]=Search::QUERY;
+                $inputObject=new QueryInput();
+            }
 
+            /**common query configuration**/
+            $qry->select=="count(*)"?$inputObject->count():$inputObject->select($qry->select);
+            $inputObject->tableName($qry->from)
+            ->indexName($qry->indexName)
+            ->limit($qry->limit);
 
+            $isQuery= $inputObject instanceof QueryInput;
 
-            //TO CREATE Scan input or query input
-            //todo
-           // $aws_input["KeyConditions"]=array("AttributeValueList"=>
-           //     array(),"ComparisonOperator"=>ComparisonOperator::EQ);
+            foreach($qry->where as $name=>$value){
 
+                $isPk=false;
+                /**if is a dynamo query and il valore trattato non e` una primary usa il query filter**/
+                $filter=(!$isQuery||$isQuery&&($isPk=$modelClass::isPrimaryKey([$name])))?
 
+                $inputObject->filter():$inputObject->queryFilter();
+
+                if($value===null&&$qry->comparator!=null){
+
+                    $filter ->injectAttribute($qry->comparator->getAttribute($name),$isPk);
+                    continue;
+                }
+
+                $filter ->attr($name)->eq($value);
+            }
         }
 
-
-        return $aws_input;
-
-
-
+        return $inputObject;
         }
 
     /**
@@ -153,19 +175,20 @@ class CommandBuilder extends \yii\base\Object
      */
     private function buildPutAWSInput(&$config){
         /** @var Item $item */
+
         $item=Item::fromArray($config['attributes'],$config['table']);
+
         return array("TableName"=>$item->getTableName(),"Item"=>$item->toArray());
 
     }
 
 
     private function targetContainsAtLeastOneKey($keysArray,$targetArray){
+
             $contain=false;
 
             foreach($keysArray as $key){
-
                 $contain=array_key_exists($key,$targetArray);
-
                 if ($contain==true) { break; }
             }
 

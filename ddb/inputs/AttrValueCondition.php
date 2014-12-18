@@ -8,8 +8,6 @@
 namespace dnocode\awsddb\ddb\inputs;
 
 
-use app\models\Element;
-use Aws\DynamoDb\Enum\AttributeAction;
 use Aws\DynamoDb\Model\Attribute;
 use Aws\DynamoDb\Model\Item;
 
@@ -22,7 +20,7 @@ class AttrValueCondition {
     private $_value_list=[];
     public $comparison_operator;
 
-    public function add($value,$type=""){
+    public function add($value,$type){
 
         $attribute=count($type)>0?new Attribute($value,$type):  Attribute::factory($value);
         $this->_value_list[]=$attribute;

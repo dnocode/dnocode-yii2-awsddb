@@ -9,10 +9,15 @@
 namespace dnocode\awsddb\ddb\inputs;
 
 
+
+use Aws\DynamoDb\Enum\ComparisonOperator;
 use Aws\DynamoDb\Model\Attribute;
-use dnocode\awsddb\ddb\builders\CommandBuilder;
-use dnocode\awsddb\enums\Search;
-use dnocode\ddb\builders\ComparatorBuilder;
+use Aws\ImportExport\Exception\InvalidParameterException;
+use ComparatorBuilder\ConditionsBuilder;
+use dnocode\awsddb\ddb\enums\Filter;
+use dnocode\awsddb\ddb\enums\Search;
+use dnocode\awsddb\ddb\builders\ComparatorBuilder;
+use yii\base\Object;
 
 class AWSFilter extends  Object {
 
@@ -24,21 +29,35 @@ class AWSFilter extends  Object {
     private $_filter_type;
 
 
-    public function __construct($filter_type){
+    /**
+     * @param Filter $filter_type
+     */
+    public function __construct($filter_type){$this->_filter_type=$filter_type;}
 
-
-        $this->_filter_type=$filter_type;
-
-
-    }
-
+    /**
+     * @param string $name
+     * @return ConditionsBuilder
+     */
     public function attr($name=""){
 
-        $this->_cB=$this->$_cB==null? new ComparatorBuilder():$this->$_cB;
-        $this->_cB->add($name);
+        if(count($name)==0){throw new InvalidParameterException("empty name not allowed!!");}
 
+        $this->_cB=$this->_cB==null? new ComparatorBuilder():$this->_cB;
+
+        return $this->_cB->andd($name);
 
     }
+
+
+    /**
+     * @param AttrValueCondition $attribute
+     */
+    public function injectAttribute($attribute,$isPK=false){
+        $this->_cB=$this->_cB==null? new ComparatorBuilder():$this->_cB;
+        if($isPK)$attribute->comparison_operator=ComparisonOperator::EQ;
+        $this->_cB->injectAttribute($attribute);
+    }
+
 
     /**
      * @param Search $what

@@ -1,12 +1,13 @@
 <?php
 
-namespace dnocode\awsddb\enums;
+namespace dnocode\awsddb\ddb\enums;
 
 use Aws\Common\Enum;
 
-class Search extends  Enum  {
+class Filter extends  Enum  {
 
   const ScanFilter="ScanFilter";
   const KeyConditions="KeyConditions";
+  const Query="QueryFilter";
 
 }

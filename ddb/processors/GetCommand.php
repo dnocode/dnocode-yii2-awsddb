@@ -6,9 +6,9 @@
  * Time: 11:34 AM
  */
 
-namespace dnocode\awsddb;
+namespace dnocode\awsddb\ddb\processors;
 
-use dnocode\awsddb\Search;
+use dnocode\awsddb\ddb\enums\Search;
 /**
  * Class PutCommand
  * @package dnocode\awsddb
