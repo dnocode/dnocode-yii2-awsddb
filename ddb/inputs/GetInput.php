@@ -8,19 +8,18 @@
 
 namespace dnocode\awsddb\ddb\inputs;
 
-
 use Aws\DynamoDb\Enum\Select;
 use dnocode\awsddb\ddb\enums\Filter;
 use yii\base\Object;
 
-class ScanInput extends AWSInput {
+class GetInput extends AWSInput {
 
-    /** @var AWSFilter $ScanFilter**/
-    protected $_scanFilter;
+    /** @var AWSFilter $_key_filter **/
+    protected $_key_filter;
 
     public function filter(){
 
-        return $this->_scanFilter=$this->_scanFilter==null?new AWSFilter(Filter::ScanFilter):$this->_scanFilter;
+        return $this->_key_filter=$this->_key_filter==null?new AWSFilter(Filter::Key):$this->_key_filter;
     }
 
 } 

@@ -54,7 +54,7 @@ use dnocode\awsddb\ddb\enums\Search;
 class GetCommand extends Command {
 
     /**
-     * @var $type can be scan or get
+     * @var $type can be scan | get | query
      */
     public $type;
 
@@ -62,7 +62,7 @@ class GetCommand extends Command {
      function execute()
     {
         $method=$this->type;
-       $this->result=$this->aws()->$method($this->amz_input);
+        $this->result=$this->aws()->$method($this->amz_input->toArray());
 
     }
 

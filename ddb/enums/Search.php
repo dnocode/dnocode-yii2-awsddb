@@ -6,7 +6,8 @@ use Aws\Common\Enum;
 
 class Search extends  Enum  {
 
-  const QUERY="get";
+  const GET="getItem";
+  const QUERY="query";
   const SCAN="scan";
 
 }

@@ -5,6 +5,7 @@ namespace dnocode\awsddb\ddb\builders;
 use Aws\DynamoDb\Enum\ComparisonOperator;
 use dnocode\awsddb\ar\ActiveRecord;
 use dnocode\awsddb\ddb\inputs\AWSInput;
+use dnocode\awsddb\ddb\inputs\GetInput;
 use dnocode\awsddb\ddb\inputs\QueryInput;
 use dnocode\awsddb\ddb\inputs\ScanInput;
 use yii\base\InvalidParamException;
@@ -134,16 +135,26 @@ class CommandBuilder extends \yii\base\Object
             $modelClass=$qry->modelClass;
             $config["type"]=Search::SCAN;
 
+            /**the where contain just primary keys it a get**/
+            if($isGet=$modelClass::isPrimaryKey(array_keys($qry->where))){
+
+                $config["type"]=Search::GET;
+                $inputObject=new GetInput();
+            }
+
             /**check if  the conditions columns are primary key too**/
-            if( $this->targetContainsAtLeastOneKey($modelClass::primaryKey(),$qry->where)){
+            if( $isGet===false&&$this->targetContainsAtLeastOneKey($modelClass::primaryKey(),$qry->where)){
                 $config["type"]=Search::QUERY;
                 $inputObject=new QueryInput();
             }
 
             /**common query configuration**/
             $qry->select=="count(*)"?$inputObject->count():$inputObject->select($qry->select);
+
             $inputObject->tableName($qry->from)
+
             ->indexName($qry->indexName)
+
             ->limit($qry->limit);
 
             $isQuery= $inputObject instanceof QueryInput;
@@ -151,14 +162,15 @@ class CommandBuilder extends \yii\base\Object
             foreach($qry->where as $name=>$value){
 
                 $isPk=false;
-                /**if is a dynamo query and il valore trattato non e` una primary usa il query filter**/
-                $filter=(!$isQuery||$isQuery&&($isPk=$modelClass::isPrimaryKey([$name])))?
+                /**is a dynamo query AND  non e` una primary usa il query filter**/
+                $filter=((!$isQuery)||$isQuery&&($isPk=$modelClass::isPrimaryKey([$name])))?
 
                 $inputObject->filter():$inputObject->queryFilter();
 
                 if($value===null&&$qry->comparator!=null){
 
                     $filter ->injectAttribute($qry->comparator->getAttribute($name),$isPk);
+                    $filter->setConditionalOperator($qry->comparator->cond_choosen);
                     continue;
                 }
 

@@ -14,41 +14,47 @@ use Aws\DynamoDb\Model\Item;
 class AttrValueCondition {
 
     const attributesKeys="AttributeValueList";
+
     const ComparisonOperator="ComparisonOperator";
 
     public $name;
+
     private $_value_list=[];
+
     public $comparison_operator;
 
     public function add($value,$type){
 
         $attribute=count($type)>0?new Attribute($value,$type):  Attribute::factory($value);
+
         $this->_value_list[]=$attribute;
     }
 
 
     /**
-     * return the object in this form
-     *
-     * 'AttributeValueList' => array(
-     *          array('S' => 'overflow')
-     *      ),
-     *     'ComparisonOperator' => 'CONTAINS'
-     *      ),
-     *
-     *  if the name is indicated
-     *
-     *  'time' => array(
-     *       'AttributeValueList' => array(
-     *           array('N' => strtotime('-15 minutes'))
-     *          ),
-     *           'ComparisonOperator' => 'GT'
-     *       )
-     **/
-
-    public function toArray(){
+     * method return attribute for filter
+     * or get operations
+     * @param bool $get
+     * @return mixed
+     */
+    public function toArray($get){
             /**todo**/
+        $output[$this->name]=$get?[]:["AttributeValueList"=>[]];
+        /** @var Attribute $attr */
+        foreach($this->_value_list as $attr){
 
+           if($get){ $output[$this->name]=$attr->toArray();
+           continue;
+           }
+
+           $output[$this->name][AttrValueCondition::attributesKeys][]=$attr->toArray();
+
+        }
+
+        if($get===false)
+        $output[$this->name][AttrValueCondition::ComparisonOperator]=$this->comparison_operator;
+
+        return $output;
     }
 
 }

@@ -138,20 +138,7 @@ class Query extends Component implements QueryInterface
     }
 
 
-    /**
-     * receive in inputs primarykeys array for retrieve item by get
-     * @param The `$conditions` should be an array of primarykeys   [prkey1=>value]
-     * @return $this
-     * @throws \Aws\ImportExport\Exception\InvalidParameterException
-     */
-    public function get($conditions)
-    {
-       // check if conditions as primary keys//if( whe($condition)==false){throw new InvalidParameterException;}
 
-        //$this->where = $condition;
-
-        return $this;
-    }
 
     /**
      * Sets the WHERE part of the query.

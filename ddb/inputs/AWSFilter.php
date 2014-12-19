@@ -26,13 +26,13 @@ class AWSFilter extends  Object {
      * the attributes value to use on query or scan as keyconditions || scanfilter
      * @var  ComparatorBuilder $_cB */
     private $_cB;
-    private $_filter_type;
+    public $filter_type;
 
 
     /**
      * @param Filter $filter_type
      */
-    public function __construct($filter_type){$this->_filter_type=$filter_type;}
+    public function __construct($filter_type){$this->filter_type=$filter_type;}
 
     /**
      * @param string $name
@@ -59,29 +59,19 @@ class AWSFilter extends  Object {
     }
 
 
+   public function conditionalOperator(){ return $this->_cB->cond_choosen;}
+    public function setConditionalOperator($conditionalOperator){
+         $this->_cB->cond_choosen=$conditionalOperator;;
+    }
+
+
+
+
     /**
      * @param Search $what
      */
-    function toArray($what){
+    function toArray(){return [$this->filter_type=>$this->_cB->toArray($this->filter_type==Filter::Key)];
 
-        /**
-         *
-
-         *          'ScanFilter' => array(
-        '                                   error' => array(
-                                                                  'AttributeValueList' => array(
-                                                                                    array('S' => 'overflow')
-                                                                                                ),
-                                                                                        'ComparisonOperator' => 'CONTAINS'
-                                                                                                ),
-                                                                                    'time' => array(
-                                                                                     'AttributeValueList' => array(
-                                                                  array('N' => strtotime('-15 minutes'))
-                                                                         ),
-                                                                     'ComparisonOperator' => 'GT'
-                                                        )
-
-         */
     }
 
 }

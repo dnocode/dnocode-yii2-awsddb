@@ -10,6 +10,8 @@ namespace dnocode\awsddb\ddb\inputs;
 
 
 use Aws\DynamoDb\Enum\Select;
+use dnocode\awsddb\ddb\enums\Search;
+use yii\debug\components\search\Filter;
 
 abstract class AWSInput {
 
@@ -92,6 +94,27 @@ abstract class AWSInput {
      * @return AWSFilter
      */
     public abstract function filter();
+
+
+
+
+    public function toArray(){
+
+        $output=[];
+        $output["TableName"]=$this->_tablename;
+        $output=array_merge($output,$this->filter()->toArray());
+        if(!empty($this->_attributes_get))
+        $output["AttributesToGet"]=$this->_attributes_get;
+        if(!empty($this->_consistent_read))
+        $output["ConsistentRead"]=$this->_consistent_read;
+        if(!empty($this->_limit))
+        $output["Limit"]=$this->_limit;
+        if(count($output[$this->filter()->filter_type])>1 and $this->filter()->filter_type!==\dnocode\awsddb\ddb\enums\Filter::Key)
+        $output["ConditionalOperator"]=$this->filter()->conditionalOperator();
+
+
+        return $output;
+    }
 
 
 

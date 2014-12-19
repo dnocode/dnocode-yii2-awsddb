@@ -18,7 +18,8 @@ class ComparatorBuilder extends Object{
     protected $_conditionsBuilder;
     /**Output properties**/
     protected $_attr_values_conditions=array();
-    protected $_cond_choosen;
+
+    public $cond_choosen="AND";
 
 
     public function andd($attributeName=""){
@@ -41,10 +42,13 @@ class ComparatorBuilder extends Object{
         if(count($attributeName)==0){throw new InvalidParameterException("name is required!!");}
         $this->_conditionsBuilder=$this->_conditionsBuilder==null?new ConditionsBuilder():$this->_conditionsBuilder;
         $this->_current_key=$attributeName;
+
+        if(array_key_exists($attributeName,$this->_attr_values_conditions)==false){
         $this->_attr_values_conditions[$attributeName]=new AttrValueCondition();
         $this->_attr_values_conditions[$attributeName]->name=$attributeName;
+        }
         $this->_conditionsBuilder->set($this,$this->current());
-        $this->_cond_choosen=$conditionalOperator;
+        $this->cond_choosen=$conditionalOperator;
         return  $this->_conditionsBuilder ;
 
     }
@@ -79,6 +83,8 @@ class ComparatorBuilder extends Object{
 
 
 
+
+
         public function columns(){
 
         $columns=array();
@@ -90,24 +96,17 @@ class ComparatorBuilder extends Object{
             return $columns;
     }
 
-    public function toArray(){
+    public function toArray($get=false){
 
-       /* 'AttributeName' => array(
-            'AttributeValueList' => array(
-                array(
-                    'S' => 'string',
-                    'N' => 'string',
-                    'B' => 'string',
-                    'SS' => array('string', ... ),
-                    'NS' => array('string', ... ),
-                    'BS' => array('string', ... ),
-                    'M' => array(
-                        // Associative array of custom 'AttributeName' key names
-                        'AttributeName' => array(
-                            // Associative array of custom key value pairs
-                        ),
-                        // ... repeated
-                    )*/
+        $output=[];
+        /** @var AttrValueCondition $attrCond */
+        foreach($this->_attr_values_conditions as $attrCond){
+
+            $output=array_merge($output,$attrCond->toArray($get));
+
+        }
+
+        return $output;
 
     }
 
@@ -183,6 +182,14 @@ class ConditionsBuilder extends Object{
         $this->_current->comparison_operator=\Aws\DynamoDb\Enum\ComparisonOperator::LT;
         return $this->_cb;
     }
+
+    public function contains($value,$type=null){
+
+        $this->_current->add($value,$type);
+        $this->_current->comparison_operator=\Aws\DynamoDb\Enum\ComparisonOperator::CONTAINS;
+        return $this->_cb;
+    }
+
 }
 
 

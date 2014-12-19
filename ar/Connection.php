@@ -114,6 +114,7 @@ class Connection extends Component
 
         /** @var  Transact $transaction */
        $transactionExist=$this->createTransactionIfNotExist($tablename);
+
        $transaction=$this->getTransaction($tablename);
 
         /**command configurator**/
@@ -135,7 +136,9 @@ class Connection extends Component
         }
 
         $config["class"]=$commandClassName;
+
         $cmd=  $this->getCommandBuilder()->build($query,$config,$params);
+
         $transaction->addCommand($cmd);
 
         if(!$transactionExist){ $transaction->commit();}
