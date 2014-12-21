@@ -10,6 +10,7 @@ namespace dnocode\awsddb\ddb\inputs;
 
 
 use Aws\DynamoDb\Enum\Select;
+use Aws\DynamoDb\Model\Item;
 use dnocode\awsddb\ddb\enums\Search;
 use yii\debug\components\search\Filter;
 
@@ -26,8 +27,10 @@ abstract class AWSInput {
     protected $_select;
     /** @var attributes list */
     protected  $_attributes_get=[];
-    /** @var attributes to insert */
-    protected  $_attributes_put=[];
+    /** @var  Item  to insert */
+    protected $_modelItem;
+
+
 
     /**
      * @param $tablename
@@ -102,6 +105,7 @@ abstract class AWSInput {
 
         $output=[];
         $output["TableName"]=$this->_tablename;
+        if($this->filter()!=null)
         $output=array_merge($output,$this->filter()->toArray());
         if(!empty($this->_attributes_get))
         $output["AttributesToGet"]=$this->_attributes_get;
@@ -109,9 +113,9 @@ abstract class AWSInput {
         $output["ConsistentRead"]=$this->_consistent_read;
         if(!empty($this->_limit))
         $output["Limit"]=$this->_limit;
-        if(count($output[$this->filter()->filter_type])>1 and $this->filter()->filter_type!==\dnocode\awsddb\ddb\enums\Filter::Key)
+        if($this->filter()!=null&&count($output[$this->filter()->filter_type])>1 and $this->filter()->filter_type!==\dnocode\awsddb\ddb\enums\Filter::Key)
         $output["ConditionalOperator"]=$this->filter()->conditionalOperator();
-
+        if($this->_modelItem!=null){ $output["Item"]=$this->_modelItem->toArray(); }
 
         return $output;
     }

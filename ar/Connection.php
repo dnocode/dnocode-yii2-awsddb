@@ -124,11 +124,10 @@ class Connection extends Component
         switch($attributeAction){
             case AttributeAction::PUT:
                 /**create command insert **/
-                $commandClassName='dnocode\awsddb\ddb\processor\PutCommand';
+                $commandClassName='dnocode\awsddb\ddb\processors\PutCommand';
                 break;
             case AttributeAction::DELETE:
-
-                $commandClassName='dnocode\awsddb\ddb\processors\DelCommand';
+                $commandClassName='dnocode\awsddb\ddb\processors\PutCommand';
                 break;
             default:
                 /**query Command**/
@@ -136,7 +135,7 @@ class Connection extends Component
         }
 
         $config["class"]=$commandClassName;
-
+        $config["type"]=$attributeAction;
         $cmd=  $this->getCommandBuilder()->build($query,$config,$params);
 
         $transaction->addCommand($cmd);
@@ -155,7 +154,9 @@ class Connection extends Component
      * @return bool
      */
     public function beginTransaction($uid=null){
+
     $this->createTransactionIfNotExist($uid);
+
       return $this->_transactions[$uid];
     }
 

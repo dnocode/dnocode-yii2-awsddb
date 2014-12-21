@@ -6,6 +6,7 @@ use Aws\DynamoDb\Enum\ComparisonOperator;
 use dnocode\awsddb\ar\ActiveRecord;
 use dnocode\awsddb\ddb\inputs\AWSInput;
 use dnocode\awsddb\ddb\inputs\GetInput;
+use dnocode\awsddb\ddb\inputs\PutInput;
 use dnocode\awsddb\ddb\inputs\QueryInput;
 use dnocode\awsddb\ddb\inputs\ScanInput;
 use yii\base\InvalidParamException;
@@ -186,11 +187,14 @@ class CommandBuilder extends \yii\base\Object
      * creates a InputCommand Object
      */
     private function buildPutAWSInput(&$config){
-        /** @var Item $item */
 
-        $item=Item::fromArray($config['attributes'],$config['table']);
+        $input=new PutInput();
 
-        return array("TableName"=>$item->getTableName(),"Item"=>$item->toArray());
+        $input->tableName($config["table"])
+
+        ->buildModel($config["attributes"]);
+
+        return $input;
 
     }
 

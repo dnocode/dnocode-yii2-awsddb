@@ -7,6 +7,7 @@
  */
 
 namespace dnocode\awsddb\ddb\processors;
+use Aws\DynamoDb\Enum\AttributeAction;
 
 /**
  * Class PutCommand
@@ -26,10 +27,23 @@ namespace dnocode\awsddb\ddb\processors;
  */
 class PutCommand  extends Command{
 
+    /**
+     * @var $type can be putItem | deleteItem | updateItem
+     */
+    public $type;
+
     function execute()
     {
 
-        $this->result==$this->aws()->putItem($this->amz_input);
+        $command="";
+        switch($this->type){
+
+            case AttributeAction::PUT:  $command="putItem"; break;
+            case AttributeAction::DELETE:  $command="deleteItem"; break;
+            case AttributeAction::ADD:  $command="updateItem"; break;
+        }
+
+        $this->result==$this->aws()->$command($this->amz_input->toArray($this->type));
 
     }
 

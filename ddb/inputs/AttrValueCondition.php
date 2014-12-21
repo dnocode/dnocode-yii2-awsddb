@@ -31,9 +31,12 @@ class AttrValueCondition {
     }
 
 
+    public function count(){return count($this->_value_list);}
+
+
     /**
      * method return attribute for filter
-     * or get operations
+     * or get operations (attribute_get)
      * @param bool $get
      * @return mixed
      */
@@ -43,6 +46,7 @@ class AttrValueCondition {
         /** @var Attribute $attr */
         foreach($this->_value_list as $attr){
 
+           /** if is get operation don`t need AttributeValueList key */
            if($get){ $output[$this->name]=$attr->toArray();
            continue;
            }

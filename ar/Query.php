@@ -134,7 +134,9 @@ class Query extends Component implements QueryInterface
         /** @var Transact $transaction */
         $transaction = $db->createExecQueryCommand($this);
 
-        return $this->populate($transaction->getResult());
+        $result=$transaction->getResult();
+
+        return $this->populate($result);
     }
 
 

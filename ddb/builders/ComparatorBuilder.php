@@ -53,8 +53,19 @@ class ComparatorBuilder extends Object{
 
     }
 
-    public function all(){   throw new NotSupportedException(__METHOD__ . ' is not supported.');}
+    /**
+     * @throws NotSupportedException
+     */
+    public function all(){
 
+
+        throw new NotSupportedException(__METHOD__ . ' is not supported.');
+
+    }
+
+    /**
+     * @throws NotSupportedException
+     */
     public function one(){   throw new NotSupportedException(__METHOD__ . ' is not supported.');}
 
     /**
@@ -117,6 +128,7 @@ class ComparatorBuilder extends Object{
 }
 
 namespace ComparatorBuilder;
+use Aws\ImportExport\Exception\InvalidParameterException;
 use yii\base\Object;
 use Aws\DynamoDb\Enum\Type;
 use dnocode\awsddb\ddb\builders\ComparatorBuilder;
@@ -148,8 +160,18 @@ class ConditionsBuilder extends Object{
      */
     public function eq($value,$type=null){
 
+        /**wanna add value in or i the comparison operator will change in IN)**/
+        if($this->_cb->cond_choosen==="OR"&&
+            $this->_current->count()>0){
+            $this->_current->comparison_operator=\Aws\DynamoDb\Enum\ComparisonOperator::IN;
+
+        }else{
+
+            $this->_current->comparison_operator=\Aws\DynamoDb\Enum\ComparisonOperator::EQ;
+        }
+
         $this->_current->add($value,$type);
-        $this->_current->comparison_operator=\Aws\DynamoDb\Enum\ComparisonOperator::EQ;
+
         return $this->_cb;
     }
 
@@ -188,6 +210,17 @@ class ConditionsBuilder extends Object{
         $this->_current->add($value,$type);
         $this->_current->comparison_operator=\Aws\DynamoDb\Enum\ComparisonOperator::CONTAINS;
         return $this->_cb;
+    }
+
+    public function in($value=array(),$type=null){
+
+        if(is_array($value)==false){throw new InvalidParameterException("value must be a array");}
+
+        foreach($value as $v){ $this->_current->add($v,$type);}
+
+        $this->_current->comparison_operator=\Aws\DynamoDb\Enum\ComparisonOperator::IN;
+
+       return $this->_cb;
     }
 
 }

@@ -8,7 +8,6 @@
 
 namespace dnocode\awsddb\ddb\processors;
 
-use dnocode\awsddb\ddb\enums\Search;
 /**
  * Class PutCommand
  * @package dnocode\awsddb

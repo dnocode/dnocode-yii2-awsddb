@@ -10,5 +10,5 @@ class Filter extends  Enum  {
   const KeyConditions="KeyConditions";
   const Query="QueryFilter";
   const Key="Key";
-
+  const Put="Item";
 }

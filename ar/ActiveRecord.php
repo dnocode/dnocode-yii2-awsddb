@@ -110,6 +110,31 @@ class ActiveRecord extends BaseActiveRecord
 
     }
 
+
+
+
+
+    public  function delete(){
+
+
+        if ($this->beforeDelete()) {
+            // we do not check the return value of deleteAll() because it's possible
+            // the record is already deleted in the database and thus the method will return 0
+            $condition = $this->getOldPrimaryKey(true);
+
+            $result = $this->deleteAll($condition);
+
+            $this->setOldAttributes(null);
+
+            $this->afterDelete();
+        }
+
+        return $result;
+
+    }
+
+
+
     /**
      * Updates the whole table using the provided attribute values and conditions.
      * For example, to change the status to be 1 for all customers whose status is 2:
@@ -139,7 +164,17 @@ class ActiveRecord extends BaseActiveRecord
      * Please refer to [[ActiveQuery::where()]] on how to specify this parameter.
      * @return integer the number of rows deleted
      */
-    public static function deleteAll($condition = null){}
+    public static function deleteAll($condition = null){
+
+        $db = static::getDb();
+
+        $db->createExecCommand(static::tableName(),AttributeAction::DELETE,$condition);
+
+        return true;
+
+    }
+
+
 
 
     /**
@@ -160,7 +195,7 @@ class ActiveRecord extends BaseActiveRecord
     {
         $columns = array_flip($record->attributes());
         foreach ($row as $name =>  $type_value) {
-            $value=current($type_value);
+            $value=is_array($type_value)?current($type_value):$type_value;
             if (isset($columns[$name])) {
                 $record->setAttribute($name, $value);
                 $record->setOldAttribute($name,$value);
