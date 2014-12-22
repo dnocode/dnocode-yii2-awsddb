@@ -23,6 +23,13 @@ class PutInput extends AWSInput {
         $this->_modelItem->setTableName($this->_tablename);
     }
 
+
+    public function toUpdateAttributes($attributes=array()){
+
+        $this->_to_update_attributes=Item::fromArray($attributes);
+
+    }
+
     /**
      * @return AWSFilter
      */
@@ -48,6 +55,14 @@ class PutInput extends AWSInput {
                 unset($output["Item"]);
                 $output["Key"]=$item;
                 break;
+
+            case AttributeAction::ADD:
+
+                $item=$output["Item"];
+                unset($output["Item"]);
+                 $output["Key"]=$item;
+
+                 break;
          }
 
         return $output;

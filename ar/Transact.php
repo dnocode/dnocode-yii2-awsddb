@@ -59,6 +59,8 @@ class Transact extends \yii\base\Object {
 
          $items=$cmd->result->toArray();
 
+         if(empty($items)){return [];}
+
          return array_key_exists("Items",$items)?$items["Items"]:array($items["Item"]);
 
      }

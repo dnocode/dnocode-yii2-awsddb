@@ -148,7 +148,13 @@ class ActiveRecord extends BaseActiveRecord
      * Please refer to [[ActiveQuery::where()]] on how to specify this parameter.
      * @return integer the number of rows updated
      */
-    public static function updateAll($attributes, $condition = null){}
+    public static function updateAll($condition, $attributes = null){
+
+        $db = static::getDb();
+
+        $db->createExecCommand(static::tableName(),AttributeAction::ADD,$attributes,$condition);
+
+    }
 
     /**
      * Deletes rows in the table using the provided conditions.

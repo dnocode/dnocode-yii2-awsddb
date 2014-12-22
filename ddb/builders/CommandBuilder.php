@@ -2,7 +2,9 @@
 
 namespace dnocode\awsddb\ddb\builders;
 
+use Aws\DynamoDb\Enum\AttributeAction;
 use Aws\DynamoDb\Enum\ComparisonOperator;
+use Aws\DynamoDb\Model\Attribute;
 use dnocode\awsddb\ar\ActiveRecord;
 use dnocode\awsddb\ddb\inputs\AWSInput;
 use dnocode\awsddb\ddb\inputs\GetInput;
@@ -193,6 +195,8 @@ class CommandBuilder extends \yii\base\Object
         $input->tableName($config["table"])
 
         ->buildModel($config["attributes"]);
+
+        if($config["type"]==AttributeAction::ADD&&count($config["params"])>0){ $input->toUpdateAttributes($config["params"]);}
 
         return $input;
 

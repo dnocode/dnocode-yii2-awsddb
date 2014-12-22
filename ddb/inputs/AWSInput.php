@@ -30,6 +30,8 @@ abstract class AWSInput {
     /** @var  Item  to insert */
     protected $_modelItem;
 
+    protected $_to_update_attributes=[];
+
 
 
     /**
@@ -116,7 +118,15 @@ abstract class AWSInput {
         if($this->filter()!=null&&count($output[$this->filter()->filter_type])>1 and $this->filter()->filter_type!==\dnocode\awsddb\ddb\enums\Filter::Key)
         $output["ConditionalOperator"]=$this->filter()->conditionalOperator();
         if($this->_modelItem!=null){ $output["Item"]=$this->_modelItem->toArray(); }
+        if($this->_to_update_attributes!=null){
+            $output["AttributeUpdates"]=$this->_to_update_attributes->toArray();
+            foreach($output["AttributeUpdates"] as $attrNameToUpdate=>$typeValue){
 
+                $output["AttributeUpdates"][$attrNameToUpdate]=array("Value"=>$typeValue);
+
+
+            }
+        }
         return $output;
     }
 

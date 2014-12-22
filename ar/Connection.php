@@ -126,6 +126,12 @@ class Connection extends Component
                 /**create command insert **/
                 $commandClassName='dnocode\awsddb\ddb\processors\PutCommand';
                 break;
+
+            case AttributeAction::ADD:
+                /**create command insert **/
+                $commandClassName='dnocode\awsddb\ddb\processors\PutCommand';
+                break;
+
             case AttributeAction::DELETE:
                 $commandClassName='dnocode\awsddb\ddb\processors\PutCommand';
                 break;
@@ -135,7 +141,9 @@ class Connection extends Component
         }
 
         $config["class"]=$commandClassName;
+
         $config["type"]=$attributeAction;
+
         $cmd=  $this->getCommandBuilder()->build($query,$config,$params);
 
         $transaction->addCommand($cmd);
