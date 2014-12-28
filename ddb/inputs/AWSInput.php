@@ -101,21 +101,24 @@ abstract class AWSInput {
     public abstract function filter();
 
 
-
-
-    public function toArray(){
+    /**
+     * @param array $params
+     * @return array
+     */
+    public function toArray($type=null){
 
         $output=[];
         $output["TableName"]=$this->_tablename;
-        if($this->filter()!=null)
-        $output=array_merge($output,$this->filter()->toArray());
+        if($this->filter()!==null){
+        $output=array_merge($output,$this->filter()->toArray());}
         if(!empty($this->_attributes_get))
         $output["AttributesToGet"]=$this->_attributes_get;
         if(!empty($this->_consistent_read))
-        $output["ConsistentRead"]=$this->_consistent_read;
+        if($type!=Search::SCAN){
+        $output["ConsistentRead"]=$this->_consistent_read;}
         if(!empty($this->_limit))
         $output["Limit"]=$this->_limit;
-        if($this->filter()!=null&&count($output[$this->filter()->filter_type])>1 and $this->filter()->filter_type!==\dnocode\awsddb\ddb\enums\Filter::Key)
+        if($this->filter()!==null&&!empty($this->filter()->toArray())&&count($output[$this->filter()->filter_type])>1 and $this->filter()->filter_type!==\dnocode\awsddb\ddb\enums\Filter::Key)
         $output["ConditionalOperator"]=$this->filter()->conditionalOperator();
         if($this->_modelItem!=null){ $output["Item"]=$this->_modelItem->toArray(); }
         if($this->_to_update_attributes!=null){

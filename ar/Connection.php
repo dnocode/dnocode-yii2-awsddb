@@ -49,7 +49,7 @@ class Connection extends Component
             'region' => $this->region
         );
 
-        $config=$this->base_url!=null?$config["base_url"]=$this->base_url:$config;
+        $this->base_url!=null?($config["base_url"]=$this->base_url):$config;
 
         $this->_amzclient=DynamoDbClient::factory($config);
 

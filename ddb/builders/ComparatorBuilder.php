@@ -110,6 +110,7 @@ class ComparatorBuilder extends Object{
     public function toArray($get=false){
 
         $output=[];
+
         /** @var AttrValueCondition $attrCond */
         foreach($this->_attr_values_conditions as $attrCond){
 

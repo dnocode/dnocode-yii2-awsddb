@@ -70,7 +70,9 @@ class AWSFilter extends  Object {
     /**
      * @param Search $what
      */
-    function toArray(){return [$this->filter_type=>$this->_cB->toArray($this->filter_type==Filter::Key)];
+    function toArray(){
+
+        return $this->_cB===null?array():[$this->filter_type=>$this->_cB->toArray($this->filter_type==Filter::Key)];
 
     }
 

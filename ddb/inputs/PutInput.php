@@ -46,14 +46,16 @@ class PutInput extends AWSInput {
     public function toArray($type){
 
 
-        $output=parent::toArray();
-
+        $output=parent::toArray($type);
+        unset($output["ConsistentRead"]);
         switch($type){
             case AttributeAction::DELETE:
 
                 $item=$output["Item"];
                 unset($output["Item"]);
                 $output["Key"]=$item;
+                /**same code right now
+                 * let this  switch for future edit**/
                 break;
 
             case AttributeAction::ADD:

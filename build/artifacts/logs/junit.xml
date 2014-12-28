@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="" tests="2" assertions="2" failures="0" errors="0" time="0.701451">
+    <testsuite name="dnocode\awsddb\test\ActiveRecordTest" file="/home/dino/workspace/SERVER/doi/vendor/dnocode/yii2-awsddb/test/ActiveRecordTest.php" namespace="dnocode\awsddb\test" fullPackage="dnocode.awsddb.test" tests="2" assertions="2" failures="0" errors="0" time="0.701451">
+      <testcase name="testPut" class="dnocode\awsddb\test\ActiveRecordTest" file="/home/dino/workspace/SERVER/doi/vendor/dnocode/yii2-awsddb/test/ActiveRecordTest.php" line="19" assertions="1" time="0.684140"/>
+      <testcase name="testScanAll" class="dnocode\awsddb\test\ActiveRecordTest" file="/home/dino/workspace/SERVER/doi/vendor/dnocode/yii2-awsddb/test/ActiveRecordTest.php" line="39" assertions="1" time="0.017311"/>
+    </testsuite>
+  </testsuite>
+</testsuites>

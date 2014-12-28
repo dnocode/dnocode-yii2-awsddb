@@ -61,7 +61,7 @@ class GetCommand extends Command {
      function execute()
     {
         $method=$this->type;
-        $this->result=$this->aws()->$method($this->amz_input->toArray());
+        $this->result=$this->aws()->$method($this->amz_input->toArray($this->type));
 
     }
 

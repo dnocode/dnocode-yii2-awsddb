@@ -3,19 +3,14 @@
 namespace dnocode\awsddb\ddb\builders;
 
 use Aws\DynamoDb\Enum\AttributeAction;
-use Aws\DynamoDb\Enum\ComparisonOperator;
-use Aws\DynamoDb\Model\Attribute;
 use dnocode\awsddb\ar\ActiveRecord;
 use dnocode\awsddb\ddb\inputs\AWSInput;
 use dnocode\awsddb\ddb\inputs\GetInput;
+
 use dnocode\awsddb\ddb\inputs\PutInput;
 use dnocode\awsddb\ddb\inputs\QueryInput;
 use dnocode\awsddb\ddb\inputs\ScanInput;
-use yii\base\InvalidParamException;
-use yii\base\NotSupportedException;
-use Aws\DynamoDb\Model\Item;
 use dnocode\awsddb\ddb\enums\Search;
-use yii\helpers\ArrayHelper;
 use dnocode\awsddb\ar\Query;
 
 /**
@@ -118,9 +113,9 @@ class CommandBuilder extends \yii\base\Object
      */
     private function buildAWSGetInput($qry,&$config){
 
-        /** todo  transform aws input in object that create array after */
-        $inputObject=new ScanInput();
 
+        $inputObject=new ScanInput();
+        $config["type"]=Search::SCAN;
 
         /**there is a comparator
          * means that was used andWhere or or Orwhere
@@ -154,12 +149,6 @@ class CommandBuilder extends \yii\base\Object
             /**common query configuration**/
             $qry->select=="count(*)"?$inputObject->count():$inputObject->select($qry->select);
 
-            $inputObject->tableName($qry->from)
-
-            ->indexName($qry->indexName)
-
-            ->limit($qry->limit);
-
             $isQuery= $inputObject instanceof QueryInput;
 
             foreach($qry->where as $name=>$value){
@@ -173,6 +162,7 @@ class CommandBuilder extends \yii\base\Object
                 if($value===null&&$qry->comparator!=null){
 
                     $filter ->injectAttribute($qry->comparator->getAttribute($name),$isPk);
+
                     $filter->setConditionalOperator($qry->comparator->cond_choosen);
                     continue;
                 }
@@ -180,6 +170,12 @@ class CommandBuilder extends \yii\base\Object
                 $filter ->attr($name)->eq($value);
             }
         }
+
+        $inputObject->tableName($qry->from)
+
+            ->indexName($qry->indexName)
+
+            ->limit($qry->limit);
 
         return $inputObject;
         }
@@ -196,7 +192,8 @@ class CommandBuilder extends \yii\base\Object
 
         ->buildModel($config["attributes"]);
 
-        if($config["type"]==AttributeAction::ADD&&count($config["params"])>0){ $input->toUpdateAttributes($config["params"]);}
+        if($config["type"]==AttributeAction::ADD
+            &&count($config["params"])>0){ $input->toUpdateAttributes($config["params"]);}
 
         return $input;
 

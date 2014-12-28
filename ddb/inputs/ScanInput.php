@@ -23,4 +23,9 @@ class ScanInput extends AWSInput {
         return $this->_scanFilter=$this->_scanFilter==null?new AWSFilter(Filter::ScanFilter):$this->_scanFilter;
     }
 
+
+
+
+
+
 } 

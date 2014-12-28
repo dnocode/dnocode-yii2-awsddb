@@ -107,6 +107,8 @@ class ActiveRecord extends BaseActiveRecord
 
         $this->afterSave(true, $changedAttributes);
 
+        return true;
+
 
     }
 
