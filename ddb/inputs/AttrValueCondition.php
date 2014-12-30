@@ -41,7 +41,7 @@ class AttrValueCondition {
      * @return mixed
      */
     public function toArray($get){
-            /**todo**/
+
         $output[$this->name]=$get?[]:["AttributeValueList"=>[]];
         /** @var Attribute $attr */
         foreach($this->_value_list as $attr){

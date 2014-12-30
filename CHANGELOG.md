@@ -1,5 +1,6 @@
 Yii Framework 2 dynamodb extension Change Log
 ==========================================
 
-2.0.0 December 09, 2014
------------------------
+1.0.0 December 30 , 2014
+--------------------------
+Activerecord dynamo db

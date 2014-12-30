@@ -54,13 +54,19 @@ class AWSFilter extends  Object {
      */
     public function injectAttribute($attribute,$isPK=false){
         $this->_cB=$this->_cB==null? new ComparatorBuilder():$this->_cB;
+
         if($isPK)$attribute->comparison_operator=ComparisonOperator::EQ;
+
         $this->_cB->injectAttribute($attribute);
     }
 
 
    public function conditionalOperator(){ return $this->_cB->cond_choosen;}
+
+
+
     public function setConditionalOperator($conditionalOperator){
+
          $this->_cB->cond_choosen=$conditionalOperator;;
     }
 

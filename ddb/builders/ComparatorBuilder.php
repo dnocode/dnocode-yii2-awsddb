@@ -42,12 +42,14 @@ class ComparatorBuilder extends Object{
         if(count($attributeName)==0){throw new InvalidParameterException("name is required!!");}
         $this->_conditionsBuilder=$this->_conditionsBuilder==null?new ConditionsBuilder():$this->_conditionsBuilder;
         $this->_current_key=$attributeName;
-
+        /** there isn`t  AttrValueCondition for this attribute create it **/
         if(array_key_exists($attributeName,$this->_attr_values_conditions)==false){
         $this->_attr_values_conditions[$attributeName]=new AttrValueCondition();
         $this->_attr_values_conditions[$attributeName]->name=$attributeName;
         }
-        $this->_conditionsBuilder->set($this,$this->current());
+
+        $currentAttrValueCondition=$this->current();
+        $this->_conditionsBuilder->set($this,$currentAttrValueCondition);
         $this->cond_choosen=$conditionalOperator;
         return  $this->_conditionsBuilder ;
 
@@ -161,7 +163,7 @@ class ConditionsBuilder extends Object{
      */
     public function eq($value,$type=null){
 
-        /**wanna add value in or i the comparison operator will change in IN)**/
+        /**wanna onother value to current valuecondition comparison operator will change in IN)**/
         if($this->_cb->cond_choosen==="OR"&&
             $this->_current->count()>0){
             $this->_current->comparison_operator=\Aws\DynamoDb\Enum\ComparisonOperator::IN;

@@ -23,8 +23,8 @@ $config = [
        'ddb' =>  [
            "class"=>'dnocode\awsddb\ar\Connection',
            'base_url'=>"http://localhost:8000",
-           'key'    => 'AKIAJJBOF2U32FXVLBQA',
-            'secret' => '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',
+           'key'    => 'KEY',
+            'secret' => 'KEY',
             'region' => 'eu-west-1'
         ],
     ]
