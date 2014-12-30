@@ -1,7 +1,7 @@
 {
     "name": "dnocode/yii2-awsddb",
     "description": "Amazon dynamo db  ActiveRecord for the Yii framework",
-    "keywords": ["yii2", "dynamo db", "active-record", "amazon"],
+    "keywords": ["yii2", "dynamo db", "activerecord", "amazon"],
     "type": "yii2-extension",
     "license": "BSD-3-Clause",
     "support": {
