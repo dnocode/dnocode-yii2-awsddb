@@ -31,14 +31,12 @@ USING
 How to define a model
 ```
 class Element {
-   public function attributes(){
-        return
-            ["uid",
-            "name",
-            "surname",
-            "sex"
-            ];
-    }
+
+   public $name;
+   public $surname;
+   public $sex;
+   public $uid;
+
     /**hash and range**/
     public static function primaryKey(){ return ["uid"];}
 
