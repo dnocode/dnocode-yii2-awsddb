@@ -108,26 +108,46 @@ abstract class AWSInput {
     public function toArray($type=null){
 
         $output=[];
+
         $output["TableName"]=$this->_tablename;
+
         if($this->filter()!==null){
-        $output=array_merge($output,$this->filter()->toArray());}
+
+            $output=array_merge($output,$this->filter()->toArray());}
+
         if(!empty($this->_attributes_get))
-        $output["AttributesToGet"]=$this->_attributes_get;
+
+            $output["AttributesToGet"]=$this->_attributes_get;
+
         if(!empty($this->_consistent_read))
-        if($type!=Search::SCAN){
-        $output["ConsistentRead"]=$this->_consistent_read;}
+
+            if($type!=Search::SCAN){
+
+                $output["ConsistentRead"]=$this->_consistent_read;}
+
         if(!empty($this->_limit))
-        $output["Limit"]=$this->_limit;
-        if($this->filter()!==null&&!empty($this->filter()->toArray())&&count($output[$this->filter()->filter_type])>1 and $this->filter()->filter_type!==\dnocode\awsddb\ddb\enums\Filter::Key)
-        $output["ConditionalOperator"]=$this->filter()->conditionalOperator();
-        if($this->_modelItem!=null){ $output["Item"]=$this->_modelItem->toArray(); }
+            $output["Limit"]=$this->_limit;
+
+        if($this->filter()!==null&&//filter not null
+            !empty($this->filter()->toArray())&&//filter values not empty
+            count($output[$this->filter()->filter_type])>1//type of filter is indicated
+            && $this->filter()->filter_type!==\dnocode\awsddb\ddb\enums\Filter::Key // isn`t key filter
+        ){
+            $output["ConditionalOperator"]=$this->filter()->conditionalOperator();
+        }
+
+        if($this->_modelItem!=null){
+
+            $output["Item"]=$this->_modelItem->toArray();
+        }
+
         if($this->_to_update_attributes!=null){
+
             $output["AttributeUpdates"]=$this->_to_update_attributes->toArray();
+
             foreach($output["AttributeUpdates"] as $attrNameToUpdate=>$typeValue){
 
                 $output["AttributeUpdates"][$attrNameToUpdate]=array("Value"=>$typeValue);
-
-
             }
         }
         return $output;

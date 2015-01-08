@@ -188,12 +188,12 @@ class CommandBuilder extends \yii\base\Object
 
         $input=new PutInput();
 
-        $input->tableName($config["table"])
+        $input->tableName($config["table"])->buildModel($config["attributes"]);
 
-        ->buildModel($config["attributes"]);
+        if($config["type"]==AttributeAction::ADD&&count($config["params"])>0){
 
-        if($config["type"]==AttributeAction::ADD
-            &&count($config["params"])>0){ $input->toUpdateAttributes($config["params"]);}
+            $input->toUpdateAttributes($config["params"]);
+        }
 
         return $input;
 

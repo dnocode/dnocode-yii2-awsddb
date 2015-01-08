@@ -3,9 +3,9 @@ namespace dnocode\awsddb\ar;
 
 
 use Aws\DynamoDb\Enum\AttributeAction;
-use yii\db\BaseActiveRecord;
+
 use yii\helpers\Inflector;
-use Aws\DynamoDb\DynamoDbClient;
+
 use yii\helpers\StringHelper;
 use Yii;
 
@@ -17,6 +17,29 @@ use Yii;
  */
 class ActiveRecord extends BaseActiveRecord
 {
+    public function init(){
+
+        $reader = function & ($object, $property) {
+            $value = & \Closure::bind(function & () use ($property) {
+                return $this->$property;
+            }, $object, $object)->__invoke();
+            return $value;
+        };
+
+
+        /**this allows to put property in
+         * private property attributes inside active record by ref**/
+       $reflect=new \ReflectionClass(get_called_class());
+
+       $props=$reflect->getProperties(\ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED |\ReflectionProperty::IS_PRIVATE);
+
+        foreach ($props as $prop) {
+
+            $pref=&$reader($this, $prop->getName());
+            $this->setAttributeByRef($prop->getName(),$pref);
+        }
+    }
+
 
 
     public static function tableName()
@@ -63,13 +86,7 @@ class ActiveRecord extends BaseActiveRecord
      * @return \string[]|void
      * @throws NotSupportedException
      */
-    public static function primaryKey()
-    {
-
-
-
-        throw new NotSupportedException(__METHOD__ . ' you need to override this method');
-    }
+    public static function primaryKey(){throw new NotSupportedException(__METHOD__ . ' you need to override this method');}
 
 
 
@@ -123,11 +140,8 @@ class ActiveRecord extends BaseActiveRecord
             // we do not check the return value of deleteAll() because it's possible
             // the record is already deleted in the database and thus the method will return 0
             $condition = $this->getOldPrimaryKey(true);
-
             $result = $this->deleteAll($condition);
-
             $this->setOldAttributes(null);
-
             $this->afterDelete();
         }
 
@@ -181,8 +195,6 @@ class ActiveRecord extends BaseActiveRecord
         return true;
 
     }
-
-
 
 
     /**

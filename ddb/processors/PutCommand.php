@@ -36,10 +36,13 @@ class PutCommand  extends Command{
     {
 
         $command="";
+
         switch($this->type){
 
             case AttributeAction::PUT:  $command="putItem"; break;
+
             case AttributeAction::DELETE:  $command="deleteItem"; break;
+
             case AttributeAction::ADD:  $command="updateItem"; break;
         }
 

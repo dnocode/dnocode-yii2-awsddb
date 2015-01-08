@@ -6,15 +6,10 @@ use dnocode\awsddb\ar\ActiveRecord;
 
 class Element extends ActiveRecord {
 
-   public function attributes(){
-
-        return
-            ["uid",
-            "name",
-            "surname",
-            "sex"
-            ];
-    }
+    public $uid;
+    public $name;
+    public $surname;
+    public $sex;
 
 
     public static function primaryKey(){ return ["uid"];}

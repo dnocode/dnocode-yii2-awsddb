@@ -10,22 +10,22 @@ namespace dnocode\awsddb\ddb\inputs;
 
 
 use Aws\DynamoDb\Enum\AttributeAction;
-use Aws\DynamoDb\Enum\Select;
-use Aws\DynamoDb\Model\Item;
-use dnocode\awsddb\ddb\enums\Filter;
-use yii\base\Object;
+
+
+
 
 class PutInput extends AWSInput {
 
     public function buildModel($attributes=array()){
 
+        $attributes=array_filter($attributes);
         $this->_modelItem=Item::fromArray($attributes);
         $this->_modelItem->setTableName($this->_tablename);
     }
 
 
     public function toUpdateAttributes($attributes=array()){
-
+        $attributes=array_filter($attributes);
         $this->_to_update_attributes=Item::fromArray($attributes);
 
     }
@@ -47,21 +47,29 @@ class PutInput extends AWSInput {
 
 
         $output=parent::toArray($type);
+
         unset($output["ConsistentRead"]);
+
         switch($type){
             case AttributeAction::DELETE:
 
                 $item=$output["Item"];
+
                 unset($output["Item"]);
+
                 $output["Key"]=$item;
+
                 /**same code right now
                  * let this  switch for future edit**/
+
                 break;
 
             case AttributeAction::ADD:
 
                 $item=$output["Item"];
+
                 unset($output["Item"]);
+
                  $output["Key"]=$item;
 
                  break;
