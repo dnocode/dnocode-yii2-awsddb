@@ -63,11 +63,9 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      * This is `null` if the record [[isNewRecord|is new]].
      */
     private $_oldAttributes;
-    /**
-     * @var array related models indexed by the relation names
-     */
-    private $_related = [];
 
+    /** @var array related object to update */
+    private $_related=[];
 
     /**
      * @inheritdoc
@@ -77,8 +75,6 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
     {
         return static::findByCondition($condition, true);
     }
-
-
 
     /**
      * Updates the whole table using the provided attribute values and conditions.
@@ -184,16 +180,6 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
             return $this->_attributes[$name];
         } elseif ($this->hasAttribute($name)) {
             return null;
-        } else {
-            if (isset($this->_related[$name]) || array_key_exists($name, $this->_related)) {
-                return $this->_related[$name];
-            }
-            $value = parent::__get($name);
-            if ($value instanceof ActiveQueryInterface) {
-                return $this->_related[$name] = $value->findFor($name, $this);
-            } else {
-                return $value;
-            }
         }
     }
 
@@ -237,9 +223,7 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
     {
         if ($this->hasAttribute($name)) {
             unset($this->_attributes[$name]);
-        } elseif (array_key_exists($name, $this->_related)) {
-            unset($this->_related[$name]);
-        } elseif ($this->getRelation($name, false) === null) {
+        } else{
             parent::__unset($name);
         }
     }
@@ -252,29 +236,12 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      * @param string $name the relation name (case-sensitive)
      * @param ActiveRecordInterface|array|null $records the related records to be populated into the relation.
      */
-    public function populateRelation($name, $records)
+    public function populateRelation($record)
     {
-        $this->_related[$name] = $records;
+        $this->_related[] = $record;
     }
 
-    /**
-     * Check whether the named relation has been populated with records.
-     * @param string $name the relation name (case-sensitive)
-     * @return boolean whether relation has been populated with records.
-     */
-    public function isRelationPopulated($name)
-    {
-        return array_key_exists($name, $this->_related);
-    }
 
-    /**
-     * Returns all populated related records.
-     * @return array an array of related records indexed by relation names.
-     */
-    public function getRelatedRecords()
-    {
-        return $this->_related;
-    }
 
     /**
      * Returns a value indicating whether the model has an attribute with the specified name.
@@ -755,7 +722,8 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
     public function afterSave($insert, $changedAttributes)
     {
         $this->trigger($insert ? self::EVENT_AFTER_INSERT : self::EVENT_AFTER_UPDATE, new AfterSaveEvent([
-            'changedAttributes' => $changedAttributes
+            'changedAttributes' => $changedAttributes,
+            'data'=>$this->_related
         ]));
     }
 
@@ -813,7 +781,7 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
             $this->_attributes[$name] = isset($record->_attributes[$name]) ? $record->_attributes[$name] : null;
         }
         $this->_oldAttributes = $this->_attributes;
-        $this->_related = [];
+
 
         return true;
     }
@@ -951,53 +919,6 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
         return $this->__isset($offset);
     }
 
-    /**
-     * Returns the relation object with the specified name.
-     * A relation is defined by a getter method which returns an [[ActiveQueryInterface]] object.
-     * It can be declared in either the Active Record class itself or one of its behaviors.
-     * @param string $name the relation name
-     * @param boolean $throwException whether to throw exception if the relation does not exist.
-     * @return ActiveQueryInterface|ActiveQuery the relational query object. If the relation does not exist
-     * and `$throwException` is false, null will be returned.
-     * @throws InvalidParamException if the named relation does not exist.
-     */
-    public function getRelation($name, $throwException = true)
-    {
-        $getter = 'get' . $name;
-        try {
-            // the relation could be defined in a behavior
-            $relation = $this->$getter();
-        } catch (UnknownMethodException $e) {
-            if ($throwException) {
-                throw new InvalidParamException(get_class($this) . ' has no relation named "' . $name . '".', 0, $e);
-            } else {
-                return null;
-            }
-        }
-        if (!$relation instanceof ActiveQueryInterface) {
-            if ($throwException) {
-                throw new InvalidParamException(get_class($this) . ' has no relation named "' . $name . '".');
-            } else {
-                return null;
-            }
-        }
-
-        if (method_exists($this, $getter)) {
-            // relation name is case sensitive, trying to validate it when the relation is defined within this class
-            $method = new \ReflectionMethod($this, $getter);
-            $realName = lcfirst(substr($method->getName(), 3));
-            if ($realName !== $name) {
-                if ($throwException) {
-                    throw new InvalidParamException('Relation names are case sensitive. ' . get_class($this) . " has a relation named \"$realName\" instead of \"$name\".");
-                } else {
-                    return null;
-                }
-            }
-        }
-
-        return $relation;
-    }
-
 
 
 
@@ -1034,20 +955,8 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
             $neededAttribute = array_pop($attributeParts);
 
             $relatedModel = $this;
-            foreach ($attributeParts as $relationName) {
-                if (isset($this->_related[$relationName]) && $this->_related[$relationName] instanceof self) {
-                    $relatedModel = $this->_related[$relationName];
-                } else {
-                    try {
-                        $relation = $relatedModel->getRelation($relationName);
-                    } catch (InvalidParamException $e) {
-                        return $this->generateAttributeLabel($attribute);
-                    }
-                    $relatedModel = new $relation->modelClass;
-                }
-            }
-
             $labels = $relatedModel->attributeLabels();
+
             if (isset($labels[$neededAttribute])) {
                 return $labels[$neededAttribute];
             }
@@ -1075,10 +984,12 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      */
     public function extraFields()
     {
-        $fields = array_keys($this->getRelatedRecords());
 
-        return array_combine($fields, $fields);
+        return [];
     }
+
+    /** default implementation mapping class name property */
+    public function relationsMap()  { return [];}
 
     /**
      * Sets the element value at the specified offset to null.

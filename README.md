@@ -98,7 +98,9 @@ $e->save();
     ```
 #TODO
 1. batch operations with transaction
-2. support for rest default operation (means work with activeDataProvider)
+2. support for relation
+3. iterator for query with more than 1MB
+
 
 
 

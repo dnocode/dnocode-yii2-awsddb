@@ -27,10 +27,6 @@ class Attribute extends \Aws\DynamoDb\Model\Attribute
      */
     public static function factory($value, $depth = 0)
     {
-        if ($depth > 1) {
-
-            throw new InvalidArgumentException('Sets must be at most one level deep.');
-        }
 
         if ($value instanceof Attribute) {
 
@@ -54,7 +50,7 @@ class Attribute extends \Aws\DynamoDb\Model\Attribute
             if(method_exists($value,"toArray")===false) throw new InvalidArgumentException('every object property must have to array method. use Arrayable Trait');
             $value=$value->toArray();
 
-         }
+        }
 
         if (is_int($value) || is_float($value)) {
 
@@ -70,20 +66,31 @@ class Attribute extends \Aws\DynamoDb\Model\Attribute
             if(is_array($value)==false&&is_object($value)){
 
                 if(method_exists($value,"toArray")===false)
+
                 {throw new InvalidArgumentException('the property');}
+
                 $value=$value->toArray();
             }
 
+            $value=array_filter($value);
+
             reset($value);
+
             $key=key($value);
             /**list or hash**/
+
             $setType = is_numeric($key)===false?"M":"L";
+
             $attribute = new Attribute(array());
+
+
 
             foreach ($value as $index=>$subValue) {
 
                 $subAttribute = static::factory($subValue, $depth + 1);
+
                 $setType = $setType === null?$subAttribute->type:$setType;
+
                 $attribute->value[$index] =  $subAttribute;
 
             }
@@ -95,6 +102,24 @@ class Attribute extends \Aws\DynamoDb\Model\Attribute
         }
 
         return $attribute;
+    }
+
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toArray(&$nestedValue=null)
+    {
+        $nestedValue= $nestedValue==null?$this->getValue():$nestedValue;
+        if($nestedValue!=null&&is_array($nestedValue)){
+
+            foreach($nestedValue as &$subvalue){
+                if(is_array($subvalue)){$this->toArray($subvalue);}
+                if($subvalue instanceof Attribute){$subvalue=$subvalue->toArray();}
+            }
+        }
+        return $this->getFormatted();
     }
 
 }

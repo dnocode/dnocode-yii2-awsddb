@@ -4,6 +4,7 @@ namespace dnocode\awsddb\ar;
 
 use Aws\DynamoDb\Enum\AttributeAction;
 
+use yii\base\InvalidCallException;
 use yii\helpers\Inflector;
 
 use yii\helpers\StringHelper;
@@ -17,6 +18,7 @@ use Yii;
  */
 class ActiveRecord extends BaseActiveRecord
 {
+
     public function init(){
 
         $reader = function & ($object, $property) {
@@ -26,15 +28,11 @@ class ActiveRecord extends BaseActiveRecord
             return $value;
         };
 
-
         /**this allows to put property in
          * private property attributes inside active record by ref**/
        $reflect=new \ReflectionClass(get_called_class());
-
        $props=$reflect->getProperties(\ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED |\ReflectionProperty::IS_PRIVATE);
-
         foreach ($props as $prop) {
-
             $pref=&$reader($this, $prop->getName());
             $this->setAttributeByRef($prop->getName(),$pref);
         }
@@ -228,5 +226,45 @@ class ActiveRecord extends BaseActiveRecord
     }
 
 
+    /**
+     * allows to add relation
+     * to maintein relation integrity
+     * @param $source_property
+     * @param ActiveRecord $parentObject
+     */
+    public function relationAdder($source_property,$parentObject)
+    {
+        $relatedObject=$this;
 
+        if($relatedObject->getIsNewRecord()){ throw new InvalidCallException("related Object is detached from context please save it before. ".$parentObject::className());}
+
+        $relationsMap=$this->relationsMap();
+
+        if(empty($relationsMap)|| array_key_exists($parentObject->className(),$relationsMap))
+        {
+            throw new InvalidCallException("need to override this method for custom relation adder or
+                                             indicate a relations map by overriding of relationsMap");}
+
+         $propertyName=$relationsMap[$parentObject->className()];
+
+        $parentObject->scenario="asProperty";
+
+        if(is_array($parentObject->$propertyName)){
+
+           array_push($relatedObject->$propertyName,$parentObject);
+
+        }else{
+
+            $relatedObject->$propertyName=$parentObject;
+        }
+
+        $parentObject->populateRelation($relatedObject);
+    }
+
+
+
+    public function relationsMap()  {
+
+        return [];
+    }
 }

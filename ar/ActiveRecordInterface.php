@@ -342,15 +342,10 @@ interface ActiveRecordInterface
     public function equals($record);
 
     /**
-     * Returns the relation object with the specified name.
-     * A relation is defined by a getter method which returns an object implementing the [[ActiveQueryInterface]]
-     * (normally this would be a relational [[ActiveQuery]] object).
-     * It can be declared in either the ActiveRecord class itself or one of its behaviors.
-     * @param string $name the relation name
-     * @param boolean $throwException whether to throw exception if the relation does not exist.
-     * @return ActiveQueryInterface the relational query object
+     * Returns the relation map
+     * beetween class and property
      */
-    public function getRelation($name, $throwException = true);
+    public function relationsMap();
 
     /**
      * Establishes the relationship between two records.

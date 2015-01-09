@@ -28,4 +28,33 @@ class Item  extends \Aws\DynamoDb\Model\Item{
         return new self($attributes, $tableName);
     }
 
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toArray()
+    {
+        $result = $this->data;
+
+        foreach ($result as &$attr) {
+
+            if ($attr instanceof Attribute) {
+
+                if(is_array($attr->getValue())){
+
+                    foreach($attr->getValue() as &$subattr){
+                        if ($subattr instanceof Attribute) {
+                            $subattr=$subattr->toArray();
+                        }
+                    }
+                }
+
+                $attr = $attr->toArray();
+            }
+        }
+
+        return $result;
+    }
+
 } 

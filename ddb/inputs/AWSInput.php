@@ -10,7 +10,7 @@ namespace dnocode\awsddb\ddb\inputs;
 
 
 use Aws\DynamoDb\Enum\Select;
-use Aws\DynamoDb\Model\Item;
+
 use dnocode\awsddb\ddb\enums\Search;
 use yii\debug\components\search\Filter;
 
