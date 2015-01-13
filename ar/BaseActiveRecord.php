@@ -64,8 +64,12 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      */
     private $_oldAttributes;
 
-    /** @var array related object to update */
+    /** @var array related object  */
     private $_related=[];
+
+
+    /** @var array related object used as property to update */
+    private $_outdated=[];
 
     /**
      * @inheritdoc
@@ -229,18 +233,19 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
     }
 
 
-
     /**
-     * Populates the named relation with the related records.
-     * Note that this method does not check if the relation exists or not.
-     * @param string $name the relation name (case-sensitive)
-     * @param ActiveRecordInterface|array|null $records the related records to be populated into the relation.
+     * @param ActiveRecord $record
      */
-    public function populateRelation($record)
+    public function populateOutDated($record)
     {
-        $this->_related[] = $record;
+        $this->_outdated[$record->getPrimaryKey()] = $record;
     }
 
+
+    public function getOutdated(){
+
+        return $this->_outdated;
+    }
 
 
     /**
@@ -261,10 +266,13 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      * @return mixed the attribute value. Null if the attribute is not set or does not exist.
      * @see hasAttribute()
      */
-    public function getAttribute($name)
+    public function &getAttribute($name)
     {
         return isset($this->_attributes[$name]) ? $this->_attributes[$name] : null;
     }
+
+
+
 
     /**
      * Sets the named attribute value.
@@ -722,8 +730,8 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
     public function afterSave($insert, $changedAttributes)
     {
         $this->trigger($insert ? self::EVENT_AFTER_INSERT : self::EVENT_AFTER_UPDATE, new AfterSaveEvent([
-            'changedAttributes' => $changedAttributes,
-            'data'=>$this->_related
+            'changedAttributes' => $changedAttributes
+
         ]));
     }
 

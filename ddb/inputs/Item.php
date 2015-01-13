@@ -11,6 +11,8 @@ namespace dnocode\awsddb\ddb\inputs;
 
 class Item  extends \Aws\DynamoDb\Model\Item{
 
+
+
     /**
      * Create an item from a simplified array
      *
@@ -39,19 +41,7 @@ class Item  extends \Aws\DynamoDb\Model\Item{
 
         foreach ($result as &$attr) {
 
-            if ($attr instanceof Attribute) {
-
-                if(is_array($attr->getValue())){
-
-                    foreach($attr->getValue() as &$subattr){
-                        if ($subattr instanceof Attribute) {
-                            $subattr=$subattr->toArray();
-                        }
-                    }
-                }
-
-                $attr = $attr->toArray();
-            }
+            if ($attr instanceof Attribute) { $attr = $attr->toArray();}
         }
 
         return $result;

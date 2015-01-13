@@ -12,7 +12,6 @@ namespace dnocode\awsddb\ddb\inputs;
 use Aws\DynamoDb\Enum\Select;
 
 use dnocode\awsddb\ddb\enums\Search;
-use yii\debug\components\search\Filter;
 
 abstract class AWSInput {
 

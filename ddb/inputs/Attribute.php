@@ -1,5 +1,6 @@
 <?php
 namespace dnocode\awsddb\ddb\inputs;
+use dnocode\awsddb\ddb\enums\AttributeType;
 
 
 /**
@@ -105,21 +106,69 @@ class Attribute extends \Aws\DynamoDb\Model\Attribute
     }
 
 
+    /**
+     * convert from amazon format to php array
+     * @param $attributeValue
+     * @return mixed
+     */
+    public static function  resolve(&$attributeValue){
+            foreach($attributeValue as $key => &$value){
+               if( is_array($value)){ self::resolve($value); }
+               $needSimplified=in_array($key, AttributeType::values());
+            }
+        if($needSimplified){ $attributeValue=array_pop($attributeValue);}
+        return $attributeValue;
+    }
+
+
+
+
 
     /**
      * {@inheritdoc}
      */
     public function toArray(&$nestedValue=null)
     {
-        $nestedValue= $nestedValue==null?$this->getValue():$nestedValue;
-        if($nestedValue!=null&&is_array($nestedValue)){
 
-            foreach($nestedValue as &$subvalue){
-                if(is_array($subvalue)){$this->toArray($subvalue);}
-                if($subvalue instanceof Attribute){$subvalue=$subvalue->toArray();}
-            }
-        }
+      if($nestedValue===null){ $nestedValue=&$this->getValue();}
+
+       if(is_array($nestedValue)){
+
+
+           foreach($nestedValue as &$subValue){
+
+
+               if($subValue instanceof Attribute){
+
+                   $subValue=$subValue->toArray();
+
+                   continue;
+               }
+
+               if(is_array($subValue)){
+                   $this->toArray($subValue);
+                   continue;
+
+               }
+
+
+           }
+
+       }
+
+
         return $this->getFormatted();
+
+
+
+    }
+
+
+
+
+    public function &getValue()
+    {
+        return $this->value;
     }
 
 }

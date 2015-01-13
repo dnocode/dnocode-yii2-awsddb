@@ -4,6 +4,7 @@ namespace dnocode\awsddb\ar;
 
 use Aws\DynamoDb\Enum\AttributeAction;
 
+use dnocode\awsddb\ddb\inputs\Attribute;
 use yii\base\InvalidCallException;
 use yii\helpers\Inflector;
 
@@ -30,12 +31,21 @@ class ActiveRecord extends BaseActiveRecord
 
         /**this allows to put property in
          * private property attributes inside active record by ref**/
+
        $reflect=new \ReflectionClass(get_called_class());
-       $props=$reflect->getProperties(\ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED |\ReflectionProperty::IS_PRIVATE);
+
+        $props=$reflect->
+            getProperties(\ReflectionProperty::IS_PUBLIC |
+            \ReflectionProperty::IS_PROTECTED |
+            \ReflectionProperty::IS_PRIVATE);
+
         foreach ($props as $prop) {
             $pref=&$reader($this, $prop->getName());
             $this->setAttributeByRef($prop->getName(),$pref);
         }
+
+        $this->on( ActiveRecord::EVENT_BEFORE_INSERT,[$this,'beforeInsertIntegrityRefresh']);
+        $this->on( ActiveRecord::EVENT_AFTER_INSERT,[$this,'afterInsertIntegritySave']);
     }
 
 
@@ -194,7 +204,6 @@ class ActiveRecord extends BaseActiveRecord
 
     }
 
-
     /**
      * Populates an active record object using a row of data from the database/storage.
      *
@@ -212,12 +221,16 @@ class ActiveRecord extends BaseActiveRecord
     public static function populateRecord($record, $row)
     {
         $columns = array_flip($record->attributes());
+
         foreach ($row as $name =>  $type_value) {
-            $value=is_array($type_value)?current($type_value):$type_value;
+
+            $value=Attribute::resolve($type_value);
             if (isset($columns[$name])) {
+
                 $record->setAttribute($name, $value);
                 $record->setOldAttribute($name,$value);
-            } elseif ($record->canSetProperty($name)) {
+            }
+            elseif ($record->canSetProperty($name)) {
                 $record->$name = $value;
             }
         }
@@ -225,14 +238,53 @@ class ActiveRecord extends BaseActiveRecord
 
     }
 
+    /**
+     * @param ModelEvent $evt
+     */
+    public function beforeInsertIntegrityRefresh($evt){
+
+        /** @var $attributes */
+        $attributes=$this->getAttributes();
+
+        $this::lookingForRelationProperty($attributes,$this);
+    }
+    /**
+     * @param ModelEvent $evt
+     */
+    public function afterInsertIntegritySave($evt){
+
+        /** @var ActiveRecord $activeRecord */
+        $relatedOutdatedObjects=$this->getOutdated();
+        /** @var ActiveRecord $ar */
+        foreach($relatedOutdatedObjects as $ar){$ar->save();}
+    }
+
+
+
 
     /**
-     * allows to add relation
-     * to maintein relation integrity
+     * this method maintein referential
+     * integrity beeween parent saving and
+     * its property active record
+     * example
+     *
+     * $client=new Client();
+     * $client->save();
+     *
+     * $parent=new Parent();
+     * $parent->clients[]=$client;
+     * $parent->save();
+     *
+     *
+     * if client has property parent this will be updated
+     * we can update this name and beetween $source property understund what kind of object wants to be update
+     *
+     * this method save parent and
+     * then save
      * @param $source_property
      * @param ActiveRecord $parentObject
      */
-    public function relationAdder($source_property,$parentObject)
+    public function addRelationProperty($parentSourceProperty,$parentObject)
     {
         $relatedObject=$this;
 
@@ -242,23 +294,73 @@ class ActiveRecord extends BaseActiveRecord
 
         if(empty($relationsMap)|| array_key_exists($parentObject->className(),$relationsMap))
         {
-            throw new InvalidCallException("need to override this method for custom relation adder or
-                                             indicate a relations map by overriding of relationsMap");}
-
-         $propertyName=$relationsMap[$parentObject->className()];
-
-        $parentObject->scenario="asProperty";
-
-        if(is_array($parentObject->$propertyName)){
-
-           array_push($relatedObject->$propertyName,$parentObject);
-
-        }else{
-
-            $relatedObject->$propertyName=$parentObject;
+            throw new InvalidCallException("need to override this method for custom relation adder or indicate a relations map by overriding of relationsMap");
         }
 
-        $parentObject->populateRelation($relatedObject);
+        //find property name in $relations map by name
+        $relationProperty=$relationsMap[$parentObject->tableName()][$parentSourceProperty];
+
+        if(array_key_exists("target",$relationProperty)==false){ throw new InvalidCallException("invalid relation map on sourceProperty:".$parentSourceProperty);}
+
+        $propertyTarget=$relationProperty["target"];
+        //is the scenario as property is implemented will be used
+        $parentObject->setScenario(array_key_exists("scenario",$relationProperty)?$relationProperty["scenario"]:self::SCENARIO_DEFAULT);
+
+        $pattributes=$parentObject->getAttributes($parentObject->safeAttributes());
+
+        if(is_array($relatedObject->$propertyTarget)){   array_push($relatedObject->$propertyTarget,$pattributes);}
+
+        else{ $relatedObject->$propertyTarget=$pattributes;}
+
+        //relation object that need to be updated
+        $parentObject->populateOutDated($relatedObject);
+    }
+
+    /**
+     * @param $attributes
+     * @param ActiveRecord $activeRecordParent
+     * @param null $propertyName
+     */
+    private function lookingForRelationProperty($attributes,$activeRecordParent,$propertyName=null){
+
+        $attributes=array_filter($attributes);
+
+        foreach( $attributes as $name=>$value){
+
+            //ricorsione
+            if(is_array($value)){
+
+                $this->lookingForRelationProperty($value,$activeRecordParent,$name);
+
+                continue;
+            }
+
+
+            if($value instanceof ActiveRecord){
+
+                $relatedObject=$value;
+
+                /**convert active record to array**/
+                /**@var Model $attribute**/
+
+                $attribute=&$this->getAttribute($propertyName==null?$name:$propertyName);
+
+                if(is_array($attribute)){
+                    /**
+                     * @var ActiveRecord $child
+                     */
+                    $child=&$attribute[$name];
+
+                    $attribute[$name]=$child->getAttributes($child->activeAttributes());
+
+                }else{
+
+                    $attribute=$attribute->getAttributes();
+                }
+
+                $relatedObject->addRelationProperty($propertyName==null?$name:$propertyName,$activeRecordParent);
+            }
+        }
     }
 
 
