@@ -8,8 +8,7 @@
 namespace dnocode\awsddb\ddb\inputs;
 
 
-use Aws\DynamoDb\Model\Attribute;
-use Aws\DynamoDb\Model\Item;
+
 
 class AttrValueCondition {
 

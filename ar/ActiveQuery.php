@@ -3,7 +3,7 @@
 namespace dnocode\awsddb\ar;
 
 use yii\db\ActiveQueryInterface;
-use yii\db\ActiveRecordInterface;
+
 
 
 /**

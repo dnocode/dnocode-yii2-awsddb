@@ -11,7 +11,6 @@ namespace dnocode\awsddb\ddb\inputs;
 
 
 use Aws\DynamoDb\Enum\ComparisonOperator;
-use Aws\DynamoDb\Model\Attribute;
 use Aws\ImportExport\Exception\InvalidParameterException;
 use ComparatorBuilder\ConditionsBuilder;
 use dnocode\awsddb\ddb\enums\Filter;

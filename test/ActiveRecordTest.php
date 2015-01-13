@@ -20,7 +20,9 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase {
         $putsOk=array();
         /**put elements***/
         for($i=1;$i<50;$i++){
+
             $e=new Element();
+
             $e->uid="".$i;
 
             $e->name=$this->generateRandomString(10);
@@ -40,7 +42,9 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase {
 
 
             $e->surname=$this->generateRandomString(10);
+
             $e->sex=$this->generateRandomString(10);
+
             if($e->save()) $putsOk[]="k"  ;
         }
         $this->assertEquals(count($putsOk),49,"puts test OK");
@@ -185,9 +189,31 @@ class ActiveRecordTest extends \PHPUnit_Framework_TestCase {
         Element::deleteAll(["name"=>"crazy8"]);
         **/
         Element::deleteAll(["uid"=>"10"]);
+
         $elements=Element::find()->andWhere("uid")->in(["10"])->all();
 
         $this->assertEquals(count($elements),0,"delete all   success ok");
+    }
+
+
+    public function testSimpleRelationInsideTable(){
+
+        $child=new Element();
+        $child->uid="51";
+        $child->name="figlio";
+        $child->surname="cognome";
+        $child->save();
+        $parent=new Element();
+        $parent->uid="52";
+        $parent->name="padre";
+        $parent->surname="cognome";
+        $parent->childs[]=$child;
+        $parent->save();
+        /** @var Element $parent */
+        $parent=Element::find()-> where(["uid"=>"52"])->one();
+        /** @var Element $child */
+        $child=Element::find()-> where(["uid"=>"51"])  ->one();
+        $this->assertEquals(count($child->parent) + count($parent->childs),3,"SimpleRelationInsideTable SUCCESS");
     }
 
 

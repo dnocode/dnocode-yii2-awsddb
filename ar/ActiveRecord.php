@@ -292,9 +292,9 @@ class ActiveRecord extends BaseActiveRecord
 
         $relationsMap=$this->relationsMap();
 
-        if(empty($relationsMap)|| array_key_exists($parentObject->className(),$relationsMap))
+        if(empty($relationsMap)|| array_key_exists($parentObject->tableName(),$relationsMap)===false)
         {
-            throw new InvalidCallException("need to override this method for custom relation adder or indicate a relations map by overriding of relationsMap");
+           return;
         }
 
         //find property name in $relations map by name
@@ -350,8 +350,7 @@ class ActiveRecord extends BaseActiveRecord
                      * @var ActiveRecord $child
                      */
                     $child=&$attribute[$name];
-
-                    $attribute[$name]=$child->getAttributes($child->activeAttributes());
+                    $attribute[$name]=$child->getAttributes();
 
                 }else{
 

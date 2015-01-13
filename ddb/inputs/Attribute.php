@@ -112,11 +112,18 @@ class Attribute extends \Aws\DynamoDb\Model\Attribute
      * @return mixed
      */
     public static function  resolve(&$attributeValue){
+
             foreach($attributeValue as $key => &$value){
+
                if( is_array($value)){ self::resolve($value); }
-               $needSimplified=in_array($key, AttributeType::values());
+
+               $needSimplified=is_numeric($key)===false&&in_array($key, AttributeType::values());
             }
+
+
         if($needSimplified){ $attributeValue=array_pop($attributeValue);}
+
+
         return $attributeValue;
     }
 
