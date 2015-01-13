@@ -96,8 +96,18 @@ class ActiveRecord extends BaseActiveRecord
      */
     public static function primaryKey(){throw new NotSupportedException(__METHOD__ . ' you need to override this method');}
 
+    /**
+     * rangekey of principal index
+     */
+    public static function rangeKey()
+    {
+        return [];
+    }
 
 
+    public static function globalIndexes(){
+        return [];
+    }
     /**
      * @inheritdoc
      */
@@ -368,4 +378,5 @@ class ActiveRecord extends BaseActiveRecord
 
         return [];
     }
-}
+
+   }

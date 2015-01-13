@@ -11,15 +11,17 @@ namespace  dnocode\awsddb\ar;
 interface ActiveRecordInterface
 {
     /**
-     * Returns the primary key **name(s)** for this AR class.
-     *
-     * Note that an array should be returned even when the record only has a single primary key.
-     *
-     * For the primary key **value** see [[getPrimaryKey()]] instead.
-     *
-     * @return string[] the primary key name(s) for this AR class.
+         hash primarykey of principal index
      */
     public static function primaryKey();
+
+
+    /**
+        rangekey of principal index
+     */
+    public static function rangeKey();
+
+    public static function globalIndexes();
 
     /**
      * Returns the list of all attribute names of the record.

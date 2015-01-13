@@ -1,5 +1,6 @@
 <?php
 namespace dnocode\awsddb\ddb\inputs;
+use Aws\DynamoDb\Enum\Type;
 use dnocode\awsddb\ddb\enums\AttributeType;
 
 
