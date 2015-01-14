@@ -938,8 +938,11 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
     public static function isPrimaryKey($keys)
     {
         $pks = static::primaryKey();
+
         if (count($keys) === count($pks)) {
+
             return count(array_intersect($keys, $pks)) === count($pks);
+
         } else {
             return false;
         }

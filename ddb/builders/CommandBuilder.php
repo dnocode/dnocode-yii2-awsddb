@@ -115,17 +115,13 @@ class CommandBuilder extends \yii\base\Object
 
 
         $inputObject=new ScanInput();
+
         $config["type"]=Search::SCAN;
 
         /**there is a comparator
          * means that was used andWhere or or Orwhere
          *  where**/
-        if($qry->comparator!=null){
-
-            $qry->where=$qry->comparator->columns();
-
-
-        }
+        if($qry->comparator!==null){  $qry->where=$qry->comparator->columns(); }
 
         if(!empty($qry->where)){
 
@@ -155,7 +151,7 @@ class CommandBuilder extends \yii\base\Object
 
                 $isPk=false;
                 /**is a dynamo query AND  non e` una primary usa il query filter**/
-                $filter=((!$isQuery)||$isQuery&&($isPk=$modelClass::isPrimaryKey([$name])))?
+                $filter=((!$isQuery)||$isQuery&&($isPk=$this->targetContainsAtLeastOneKey($modelClass::primaryKey(),[$name=>$value])))?
 
                 $inputObject->filter():$inputObject->queryFilter();
 
