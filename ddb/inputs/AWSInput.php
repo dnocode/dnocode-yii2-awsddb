@@ -110,6 +110,12 @@ abstract class AWSInput {
 
         $output["TableName"]=$this->_tablename;
 
+        if($this->_indexname!==null){
+
+            $output["IndexName"]=$this->_indexname;
+
+        }
+
         if($this->filter()!==null){
 
             $output=array_merge($output,$this->filter()->toArray());}

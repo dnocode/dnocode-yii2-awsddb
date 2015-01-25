@@ -114,6 +114,8 @@ class Attribute extends \Aws\DynamoDb\Model\Attribute
      */
     public static function  resolve(&$attributeValue){
 
+            if(is_array($attributeValue)===false){return $attributeValue;}
+
             foreach($attributeValue as $key => &$value){
 
                if( is_array($value)){ self::resolve($value); }

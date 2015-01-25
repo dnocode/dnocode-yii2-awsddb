@@ -238,6 +238,9 @@ class Query extends Component implements QueryInterface
                 foreach ($rows as $row) {
                     $model = $class::instantiate($row);
                     $class::populateRecord($model, $row);
+
+                    $model->afterFind();
+
                     $models[] = $model;
                 }
             } else {
@@ -249,6 +252,9 @@ class Query extends Component implements QueryInterface
                     } else {
                         $key = call_user_func($this->indexBy, $model);
                     }
+
+                    $model->afterFind();
+
                     $models[$key] = $model;
                 }
             }
@@ -263,6 +269,13 @@ class Query extends Component implements QueryInterface
         $this->select="count($q)";
     }
 
+
+    public function IndexName($indexName){
+
+       $this->indexName=$indexName;
+        return $this;
+
+    }
 
     public function indexBy($column)
     {

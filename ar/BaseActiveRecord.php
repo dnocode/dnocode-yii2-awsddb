@@ -911,7 +911,7 @@ abstract class BaseActiveRecord extends Model implements ActiveRecordInterface
      * @param array $row row data to be populated into the record.
      * @return static the newly created active record
      */
-    public static function instantiate($row)
+    public static function instantiate()
     {
         return new static;
     }
