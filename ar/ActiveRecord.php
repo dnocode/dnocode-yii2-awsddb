@@ -35,9 +35,10 @@ class ActiveRecord extends BaseActiveRecord
        $reflect=new \ReflectionClass(get_called_class());
 
         $props=$reflect->
-            getProperties(\ReflectionProperty::IS_PUBLIC |
-            \ReflectionProperty::IS_PROTECTED |
-            \ReflectionProperty::IS_PRIVATE);
+            getProperties(\ReflectionProperty::IS_PUBLIC //|
+            //\ReflectionProperty::IS_PROTECTED |
+            //\ReflectionProperty::IS_PRIVATE
+            );
 
         foreach ($props as $prop) {
             $pref=&$reader($this, $prop->getName());
