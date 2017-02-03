@@ -43,7 +43,7 @@ class PutInput extends AWSInput {
      * @param $type  put | delete | add
      * @return array
      */
-    public function toArray($type){
+    public function toArray($type=null){
 
 
         $output=parent::toArray($type);
